@@ -1,0 +1,178 @@
+<div class="page fade-in">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Bienvenido, {{ (auth.currentUser()?.nombreCompleto || '').split(' ')[0] }}</h1>
+      <p class="page-subtitle">{{ today | date:'EEEE, d \'de\' MMMM yyyy' }} · Resumen del sistema</p>
+    </div>
+    <button class="btn btn-secondary" (click)="cargar()">
+      <svg viewBox="0 0 20 20" fill="currentColor" width="15"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/></svg>
+      Actualizar
+    </button>
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-danger fade-in mb-20">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="loading-wrap"><div class="spinner"></div></div>
+  } @else if (data()) {
+
+    <!-- ══ Franja de urgencia — lo primero que se debe ver ══ -->
+    @if (data()!.medicamentosStockBajo > 0 || data()!.medicamentosProximosAVencer > 0) {
+      <div class="urgency-strip fade-in-2">
+        <div class="urgency-strip-label">
+          <span class="urgency-dot"></span>
+          Requiere tu atención hoy
+        </div>
+        <div class="urgency-cards">
+          @if (data()!.medicamentosStockBajo > 0) {
+            <a class="urgency-card is-critical" routerLink="/medicamentos">
+              <div class="urgency-icon">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="18"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+              </div>
+              <div class="urgency-content">
+                <div class="urgency-value">{{ data()!.medicamentosStockBajo }}</div>
+                <div class="urgency-label">Con stock crítico</div>
+              </div>
+              <svg viewBox="0 0 20 20" fill="currentColor" width="16" class="urgency-arrow"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+            </a>
+          }
+          @if (data()!.medicamentosProximosAVencer > 0) {
+            <a class="urgency-card is-warning" routerLink="/medicamentos">
+              <div class="urgency-icon">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="18"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+              </div>
+              <div class="urgency-content">
+                <div class="urgency-value">{{ data()!.medicamentosProximosAVencer }}</div>
+                <div class="urgency-label">Vencen en 60 días</div>
+              </div>
+              <svg viewBox="0 0 20 20" fill="currentColor" width="16" class="urgency-arrow"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+            </a>
+          }
+        </div>
+      </div>
+    } @else {
+      <div class="all-clear fade-in-2">
+        <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
+        Sin alertas de inventario. Todo el stock está en orden.
+      </div>
+    }
+
+    <!-- ══ Métricas: una domina, el resto acompaña ══ -->
+    <div class="metrics-row fade-in-3">
+      <a class="metric-hero" routerLink="/ventas">
+        <div class="metric-hero-label">Ventas de hoy</div>
+        <div class="metric-hero-value">S/. {{ data()!.totalVentasHoy | number:'1.2-2' }}</div>
+        <div class="metric-hero-sub">{{ data()!.ventasHoy }} transacción{{ data()!.ventasHoy !== 1 ? 'es' : '' }} registrada{{ data()!.ventasHoy !== 1 ? 's' : '' }}</div>
+      </a>
+
+      <div class="metric-side-grid">
+        <a class="metric-side" routerLink="/ventas">
+          <div class="metric-side-icon">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clip-rule="evenodd"/></svg>
+          </div>
+          <div class="metric-side-value">S/. {{ data()!.totalVentasMes | number:'1.0-0' }}</div>
+          <div class="metric-side-label">Ventas del mes</div>
+        </a>
+
+        <a class="metric-side" [class.is-alert]="data()!.medicamentosStockBajo > 0" routerLink="/medicamentos">
+          <div class="metric-side-icon"><app-nav-icon name="pill" /></div>
+          <div class="metric-side-value">{{ data()!.totalMedicamentos }}</div>
+          <div class="metric-side-label">Medicamentos</div>
+        </a>
+
+        <a class="metric-side" routerLink="/clientes">
+          <div class="metric-side-icon"><app-nav-icon name="users" /></div>
+          <div class="metric-side-value">{{ data()!.totalClientes }}</div>
+          <div class="metric-side-label">Clientes</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Tables row -->
+    <div class="tables-row fade-in-4">
+      <!-- Stock bajo -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-header-title is-danger">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+            Stock Bajo
+          </h3>
+          <a routerLink="/medicamentos" class="btn btn-ghost btn-sm">Ver todos</a>
+        </div>
+        @if (stockBajo().length === 0) {
+          <div class="empty-state mini-empty">
+            <p class="mini-empty-text">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
+              Todos los medicamentos tienen stock suficiente
+            </p>
+          </div>
+        } @else {
+          <div class="table-wrapper">
+            <table class="table">
+              <thead><tr><th>Medicamento</th><th>Stock</th></tr></thead>
+              <tbody>
+                @for (m of stockBajo(); track m.id) {
+                  <tr>
+                    <td>
+                      <div class="med-name">{{ m.nombre }}</div>
+                      <div class="med-cat">{{ m.categoriaNombre }}</div>
+                    </td>
+                    <td>
+                      <div class="stock-bar-wrap">
+                        <div class="stock-bar"><div class="stock-bar-fill {{ stockClass(m) }}" [style.width]="stockPct(m)+'%'"></div></div>
+                        <span class="badge badge-danger">{{ m.stock }}</span>
+                      </div>
+                      <div class="med-min">Mín: {{ m.stockMinimo }}</div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <!-- Por vencer -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-header-title is-warning">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+            Próximos a Vencer
+          </h3>
+          <a routerLink="/medicamentos" class="btn btn-ghost btn-sm">Ver todos</a>
+        </div>
+        @if (porVencer().length === 0) {
+          <div class="empty-state mini-empty">
+            <p class="mini-empty-text">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
+              Ningún medicamento vence en los próximos 60 días
+            </p>
+          </div>
+        } @else {
+          <div class="table-wrapper">
+            <table class="table">
+              <thead><tr><th>Medicamento</th><th>Vence</th></tr></thead>
+              <tbody>
+                @for (m of porVencer(); track m.id) {
+                  <tr>
+                    <td>
+                      <div class="med-name">{{ m.nombre }}</div>
+                      <div class="med-cat">{{ m.categoriaNombre }}</div>
+                    </td>
+                    <td>
+                      <div class="med-expiry">{{ m.fechaVencimiento | date:'dd/MM/yyyy' }}</div>
+                      <span [class]="'badge ' + urgenciaBadge(diasParaVencer(m.fechaVencimiento))">{{ diasParaVencer(m.fechaVencimiento) }}d</span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,181 @@
+/* ════════════════════════════════════════════════════════
+   DASHBOARD — jerarquía: urgencia > venta de hoy > resto
+   El ojo debe encontrar "qué requiere acción" antes que
+   cualquier número de negocio. Un solo foco por fila.
+════════════════════════════════════════════════════════ */
+
+/* ── Franja de urgencia ── */
+.urgency-strip {
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+}
+.urgency-strip-label {
+  display: flex; align-items: center; gap: 8px;
+  font-size: .75rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--gray-500);
+  margin-bottom: 12px;
+}
+.urgency-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--danger);
+  box-shadow: 0 0 0 3px var(--danger-light);
+  flex-shrink: 0;
+}
+.urgency-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+.urgency-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: var(--radius);
+  text-decoration: none;
+  border: 1.5px solid transparent;
+  transition: border-color .15s ease, background-color .15s ease;
+}
+.urgency-card.is-critical { background: var(--danger-light); border-color: #fecaca; }
+.urgency-card.is-critical:hover { background: #fee2e2; }
+.urgency-card.is-warning  { background: var(--warning-light); border-color: #fde68a; }
+.urgency-card.is-warning:hover { background: #fef3c7; }
+
+.urgency-icon {
+  width: 36px; height: 36px; border-radius: 9px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.is-critical .urgency-icon { background: rgba(239,68,68,.14); color: var(--danger); }
+.is-warning  .urgency-icon { background: rgba(245,158,11,.16); color: var(--warning); }
+
+.urgency-content { flex: 1; min-width: 0; }
+.urgency-value {
+  font-family: 'Sora', sans-serif; font-size: 1.5rem; font-weight: 800; line-height: 1;
+}
+.is-critical .urgency-value { color: #b91c1c; }
+.is-warning  .urgency-value { color: #92400e; }
+.urgency-label { font-size: .78rem; font-weight: 500; color: var(--gray-600); margin-top: 3px; }
+.urgency-arrow { flex-shrink: 0; opacity: .5; }
+.is-critical .urgency-arrow { color: var(--danger); }
+.is-warning  .urgency-arrow { color: var(--warning); }
+
+/* Estado sin alertas — discreto, no celebra con el mismo peso que una alerta activa */
+.all-clear {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 18px; margin-bottom: 20px;
+  background: var(--accent-muted); border: 1px solid var(--accent-light);
+  border-radius: var(--radius);
+  font-size: .85rem; font-weight: 500; color: var(--accent-dark);
+}
+
+/* ── Fila de métricas: una domina, el resto acompaña ── */
+.metrics-row {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) 2fr;
+  gap: 14px;
+  margin-bottom: 20px;
+  align-items: stretch;
+}
+
+.metric-hero {
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 24px 26px;
+  background: var(--white);
+  border: 1.5px solid var(--accent-light);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  transition: transform .15s cubic-bezier(.23,1,.32,1), border-color .15s ease;
+  position: relative;
+  overflow: hidden;
+}
+.metric-hero:hover { transform: translateY(-1px); border-color: var(--accent); }
+/* Tinte apenas perceptible en la esquina — sugiere "esta tarjeta es distinta"
+   sin recurrir a un bloque de color sólido ajeno al resto del sistema. */
+.metric-hero::before {
+  content: '';
+  position: absolute; top: 0; right: 0;
+  width: 140px; height: 140px;
+  background: radial-gradient(circle at top right, var(--accent-muted), transparent 70%);
+  pointer-events: none;
+}
+.metric-hero-label {
+  font-size: .75rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--gray-500);
+  margin-bottom: 8px; position: relative;
+}
+.metric-hero-value {
+  font-family: 'Sora', sans-serif; font-size: 2.3rem; font-weight: 800;
+  color: var(--gray-900); line-height: 1.05; letter-spacing: -.01em;
+  position: relative;
+}
+.metric-hero-sub { font-size: .82rem; color: var(--accent-dark); font-weight: 600; margin-top: 6px; position: relative; }
+
+.metric-side-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.metric-side {
+  display: flex; flex-direction: column;
+  padding: 18px 20px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.metric-side:hover { border-color: var(--gray-300); box-shadow: var(--shadow-sm); }
+.metric-side-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--gray-100); color: var(--gray-500);
+  margin-bottom: 12px;
+}
+.metric-side.is-alert .metric-side-icon { background: var(--danger-light); color: var(--danger); }
+.metric-side-value {
+  font-family: 'Sora', sans-serif; font-size: 1.5rem; font-weight: 700;
+  color: var(--gray-900); line-height: 1.1;
+}
+.metric-side-label { font-size: .78rem; color: var(--gray-500); margin-top: 3px; }
+
+/* ── Tables ── */
+.tables-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.card-header-title {
+  display: flex; align-items: center; gap: 8px;
+}
+.card-header-title svg { color: var(--gray-400); flex-shrink: 0; }
+.card-header-title.is-danger svg  { color: var(--danger); }
+.card-header-title.is-warning svg { color: var(--warning); }
+
+.loading-wrap { display: flex; justify-content: center; padding: 80px; }
+
+.mini-empty { padding: 32px; }
+.mini-empty-text {
+  display: flex; align-items: center; gap: 8px; justify-content: center;
+  font-size: .875rem; color: var(--gray-500);
+}
+.mini-empty-text svg { color: var(--accent); flex-shrink: 0; }
+
+.med-name { font-weight: 600; font-size: .85rem; }
+.med-cat  { font-size: .72rem; color: var(--gray-500); }
+.med-min  { font-size: .7rem; color: var(--gray-500); }
+.med-expiry { font-size: .82rem; }
+.med-expiry + .badge { font-size: .65rem; margin-top: 2px; }
+
+@media (max-width: 900px) {
+  .metrics-row { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  .tables-row  { grid-template-columns: 1fr; }
+  .metric-side-grid { grid-template-columns: 1fr 1fr; }
+  .metric-hero-value { font-size: 1.9rem; }
+}
+@media (max-width: 480px) {
+  .metric-side-grid { grid-template-columns: 1fr; }
+  .urgency-cards { grid-template-columns: 1fr; }
+}

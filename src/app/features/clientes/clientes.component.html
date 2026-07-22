@@ -1,0 +1,140 @@
+<div class="page fade-in">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><app-nav-icon name="users" class="page-title-icon" />Clientes</h1>
+      <p class="page-subtitle">Registro y gestión de clientes</p>
+    </div>
+    <button class="btn btn-primary" (click)="openCreate()">
+      <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+      Nuevo Cliente
+    </button>
+  </div>
+
+  @if (success()) { <div class="alert alert-success fade-in mb-16"><svg viewBox="0 0 20 20" fill="currentColor" width="16" class="alert-icon"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg> {{ success() }}</div> }
+  @if (error() && !showModal()) { <div class="alert alert-danger fade-in" class="mb-16">{{ error() }}</div> }
+
+  <div class="card">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="search-bar">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
+          <input class="search-input" type="text" placeholder="Buscar por nombre, DNI o email..." (input)="onSearch($event)">
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <span class="text-muted" class="text-sm">{{ filtered().length }} cliente{{ filtered().length !== 1 ? 's' : '' }}</span>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="loading-block"><div class="spinner"></div></div>
+    } @else if (filtered().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="32"><path stroke-linecap="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div>
+        <p class="empty-title">Sin clientes</p>
+        <p class="empty-desc">Agrega el primer cliente registrado.</p>
+      </div>
+    } @else {
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>DNI</th>
+              <th>Contacto</th>
+              <th>Dirección</th>
+              <th>F. Nacimiento</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of filtered(); track c.id) {
+              <tr>
+                <td>
+                  <div class="row-gap-10">
+                    <div class="avatar avatar-sm">
+                      {{ c.nombre.charAt(0) }}
+                    </div>
+                    <span class="text-bold">{{ c.nombre }}</span>
+                  </div>
+                </td>
+                <td style="font-family:monospace;font-size:.9rem;font-weight:600">{{ c.dni }}</td>
+                <td>
+                  @if (c.telefono) { <div class="text-sm"><svg viewBox="0 0 20 20" fill="currentColor" width="13" class="inline-icon"><path d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-.826 1.68l-1.293.646a11.037 11.037 0 006.105 6.105l.646-1.293a1.5 1.5 0 011.68-.826l3.223.716A1.5 1.5 0 0118 14.35V15.5a1.5 1.5 0 01-1.5 1.5H15c-1.149 0-2.263-.15-3.326-.43A13.022 13.022 0 013.43 8.326 13.019 13.019 0 013 5V3.5z"/></svg> {{ c.telefono }}</div> }
+                  @if (c.email) { <div class="text-xs">{{ c.email }}</div> }
+                </td>
+                <td style="max-width:180px;font-size:.82rem;color:var(--gray-600)">{{ c.direccion || '—' }}</td>
+                <td style="font-size:.85rem">{{ c.fechaNacimiento ? (c.fechaNacimiento | date:'dd/MM/yyyy') : '—' }}</td>
+                <td>
+                  <button class="badge" style="cursor:pointer;border:none"
+                    [class.badge-success]="c.activo" [class.badge-gray]="!c.activo"
+                    (click)="toggleEstado(c)">
+                    {{ c.activo ? 'Activo' : 'Inactivo' }}
+                  </button>
+                </td>
+                <td>
+                  <button class="btn btn-ghost btn-icon btn-sm" (click)="openEdit(c)">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="15"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+@if (showModal()) {
+  <div class="modal-overlay" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingId() ? 'Editar Cliente' : 'Nuevo Cliente' }}</h2>
+        <button class="btn btn-ghost btn-icon" (click)="closeModal()">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="18"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        @if (error()) { <div class="alert alert-danger" class="mb-14">{{ error() }}</div> }
+        <form [formGroup]="form">
+          <div class="form-grid">
+            <div class="form-group col-span-2">
+              <label class="form-label">Nombre completo *</label>
+              <input class="form-control" formControlName="nombre" [class.is-invalid]="f['nombre'].invalid && f['nombre'].touched" placeholder="Juan Pérez Torres">
+            </div>
+            <div class="form-group">
+              <label class="form-label">DNI *</label>
+              <input class="form-control" formControlName="dni" [class.is-invalid]="f['dni'].invalid && f['dni'].touched" placeholder="12345678" maxlength="8">
+              @if (f['dni'].errors?.['pattern'] && f['dni'].touched) { <span class="form-error">Debe tener exactamente 8 dígitos</span> }
+            </div>
+            <div class="form-group">
+              <label class="form-label">Teléfono</label>
+              <input class="form-control" formControlName="telefono" placeholder="987654321">
+            </div>
+            <div class="form-group col-span-2">
+              <label class="form-label">Email</label>
+              <input class="form-control" type="email" formControlName="email" [class.is-invalid]="f['email'].invalid && f['email'].touched">
+            </div>
+            <div class="form-group col-span-2">
+              <label class="form-label">Dirección</label>
+              <input class="form-control" formControlName="direccion" placeholder="Jr. Los Pinos 123, Surco">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fecha de Nacimiento</label>
+              <input class="form-control" type="date" formControlName="fechaNacimiento">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" (click)="save()" [disabled]="form.invalid || saving()">
+          @if (saving()) { <div class="spinner spinner-sm"></div> }
+          {{ editingId() ? 'Actualizar' : 'Crear' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

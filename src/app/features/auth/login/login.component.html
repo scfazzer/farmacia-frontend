@@ -1,0 +1,70 @@
+<div class="login-wrapper">
+
+  <!-- Panel izquierdo -->
+  <div class="login-brand">
+    <div class="brand-circle c1"></div>
+    <div class="brand-circle c2"></div>
+    <div class="brand-circle c3"></div>
+    <div class="brand-content">
+      <div class="brand-icon">+</div>
+      <h1 class="brand-title">SaludPlus</h1>
+      <p class="brand-subtitle">Sistema de Gestión Farmacéutica</p>
+    </div>
+  </div>
+
+  <!-- Panel derecho -->
+  <div class="login-form-panel">
+    <div class="login-card fade-in">
+
+      <h2 class="login-title">Iniciar sesión</h2>
+      <p class="login-desc">Accede a tu cuenta para continuar</p>
+
+      @if (error()) {
+        <div class="login-error fade-in">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+          {{ error() }}
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+
+        <div class="field" [class.field-error]="f['username'].invalid && f['username'].touched">
+          <label for="username">Usuario</label>
+          <input id="username" type="text" class="field-input"
+            formControlName="username"
+            placeholder="Ingresa tu usuario"
+            autocomplete="username"/>
+          @if (f['username'].hasError('required') && f['username'].touched) {
+            <span class="field-msg">El usuario es obligatorio</span>
+          }
+        </div>
+
+        <div class="field" [class.field-error]="f['password'].invalid && f['password'].touched">
+          <label for="password">Contraseña</label>
+          <div class="pass-wrap">
+            <input id="password" class="field-input"
+              [type]="showPass() ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="Ingresa tu contraseña"
+              autocomplete="current-password"/>
+            <button type="button" class="pass-toggle" (click)="showPass.set(!showPass())" tabindex="-1" [attr.aria-label]="showPass() ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+              @if (showPass()) {
+                <svg viewBox="0 0 20 20" fill="currentColor" width="18"><path fill-rule="evenodd" d="M3.28 2.22a.75.75 0 00-1.06 1.06l14.5 14.5a.75.75 0 101.06-1.06l-1.745-1.745a10.029 10.029 0 003.3-4.38 1.651 1.651 0 000-1.185A10.004 10.004 0 009.999 3a9.956 9.956 0 00-4.744 1.194L3.28 2.22zM7.752 6.69l1.092 1.092a2.5 2.5 0 013.374 3.373l1.091 1.092a4 4 0 00-5.557-5.557z" clip-rule="evenodd"/><path d="M10.748 13.93l2.523 2.523a9.987 9.987 0 01-3.27.547c-4.258 0-7.894-2.66-9.337-6.41a1.651 1.651 0 010-1.186A10.007 10.007 0 012.839 6.02L6.07 9.252a4 4 0 004.678 4.678z"/></svg>
+              } @else {
+                <svg viewBox="0 0 20 20" fill="currentColor" width="18"><path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/><path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>
+              }
+            </button>
+          </div>
+          @if (f['password'].hasError('required') && f['password'].touched) {
+            <span class="field-msg">La contraseña es obligatoria</span>
+          }
+        </div>
+
+        <button type="submit" class="btn-login" [disabled]="loading()">
+          @if (loading()) { Ingresando... } @else { Ingresar al sistema }
+        </button>
+
+      </form>
+    </div>
+  </div>
+</div>

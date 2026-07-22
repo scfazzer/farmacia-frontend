@@ -1,0 +1,3811 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+public/
+  favicon.ico
+src/
+  app/
+    core/
+      guards/
+        auth.guard.ts
+      interceptors/
+        auth.interceptor.ts
+      models/
+        auth.model.ts
+        dashboard.model.ts
+      services/
+        auth.service.ts
+        categoria.service.ts
+        cliente.service.ts
+        dashboard.service.ts
+        medicamento.service.ts
+        proveedor.service.ts
+        usuario.service.ts
+        venta.service.ts
+    features/
+      auth/
+        login/
+          login.component.css
+          login.component.html
+          login.component.ts
+      categorias/
+        categorias.component.css
+        categorias.component.html
+        categorias.component.ts
+      clientes/
+        clientes.component.css
+        clientes.component.html
+        clientes.component.ts
+      dashboard/
+        dashboard.component.css
+        dashboard.component.html
+        dashboard.component.ts
+      layout/
+        layout.component.css
+        layout.component.html
+        layout.component.ts
+      medicamentos/
+        medicamentos.component.css
+        medicamentos.component.html
+        medicamentos.component.ts
+      proveedores/
+        proveedores.component.css
+        proveedores.component.html
+        proveedores.component.ts
+      usuarios/
+        usuarios.component.css
+        usuarios.component.html
+        usuarios.component.ts
+      ventas/
+        ventas.component.css
+        ventas.component.html
+        ventas.component.ts
+    app.component.ts
+    app.config.ts
+    app.css
+    app.html
+    app.routes.ts
+    app.spec.ts
+    app.ts
+  environments/
+    environment.prod.ts
+    environment.ts
+  index.html
+  main.ts
+  styles.css
+.editorconfig
+.gitignore
+.prettierrc
+angular.json
+package.json
+README.md
+tsconfig.app.json
+tsconfig.json
+tsconfig.spec.json
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="src/app/core/guards/auth.guard.ts">
+import { inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
+import { AuthService } from '../services/auth.service';
+
+export const authGuard: CanActivateFn = () => {
+  const auth   = inject(AuthService);
+  const router = inject(Router);
+  if (auth.isLoggedIn()) return true;
+  return router.createUrlTree(['/login']);
+};
+
+export const adminGuard: CanActivateFn = () => {
+  const auth   = inject(AuthService);
+  const router = inject(Router);
+  if (auth.isAdmin()) return true;
+  return router.createUrlTree(['/dashboard']);
+};
+</file>
+
+<file path="src/app/core/interceptors/auth.interceptor.ts">
+import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { catchError, throwError } from 'rxjs';
+import { Router } from '@angular/router';
+import { AuthService } from '../services/auth.service';
+
+export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  const authService = inject(AuthService);
+  const router      = inject(Router);
+  const token       = authService.getToken();
+
+  const authReq = token
+    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+    : req;
+
+  return next(authReq).pipe(
+    catchError((err: HttpErrorResponse) => {
+      if (err.status === 401 || err.status === 403) {
+        authService.logout();
+        router.navigate(['/login']);
+      }
+      return throwError(() => err);
+    })
+  );
+};
+</file>
+
+<file path="src/app/core/models/auth.model.ts">
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  tipo: string;
+  username: string;
+  nombreCompleto: string;
+  rol: 'ADMIN' | 'EMPLEADO';
+  fechaEmision: string;
+  fechaExpiracion: string;
+}
+
+export interface CurrentUser {
+  username: string;
+  nombreCompleto: string;
+  rol: 'ADMIN' | 'EMPLEADO';
+}
+</file>
+
+<file path="src/app/core/models/dashboard.model.ts">
+export interface DashboardData {
+  totalMedicamentos: number;
+  medicamentosStockBajo: number;
+  medicamentosProximosAVencer: number;
+  totalClientes: number;
+  ventasHoy: number;
+  totalVentasHoy: number;
+  ventasMes: number;
+  totalVentasMes: number;
+}
+
+export interface MedicamentoResponse {
+  id: number;
+  nombre: string;
+  principioActivo: string;
+  presentacion: string;
+  concentracion: string;
+  precioVenta: number;
+  precioCompra: number;
+  stock: number;
+  stockMinimo: number;
+  stockBajo: boolean;
+  fechaVencimiento: string;
+  requiereReceta: boolean;
+  activo: boolean;
+  categoriaId: number;
+  categoriaNombre: string;
+  proveedorId: number;
+  proveedorNombre: string;
+}
+</file>
+
+<file path="src/app/core/services/auth.service.ts">
+import { Injectable, signal, computed } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
+import { tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { AuthResponse, CurrentUser, LoginRequest } from '../models/auth.model';
+
+const TOKEN_KEY = 'fs_token';
+const USER_KEY  = 'fs_user';
+
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+
+  private readonly apiUrl = `${environment.apiUrl}/auth`;
+
+  // Señales reactivas (Angular 17+)
+  private _user = signal<CurrentUser | null>(this.loadUser());
+  readonly currentUser = this._user.asReadonly();
+  readonly isLoggedIn  = computed(() => this._user() !== null);
+  readonly isAdmin     = computed(() => this._user()?.rol === 'ADMIN');
+
+  constructor(private http: HttpClient, private router: Router) {}
+
+  login(req: LoginRequest): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.apiUrl}/login`, req).pipe(
+      tap(res => {
+        localStorage.setItem(TOKEN_KEY, res.token);
+        const user: CurrentUser = {
+          username: res.username,
+          nombreCompleto: res.nombreCompleto,
+          rol: res.rol
+        };
+        localStorage.setItem(USER_KEY, JSON.stringify(user));
+        this._user.set(user);
+      })
+    );
+  }
+
+  logout(): void {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    this._user.set(null);
+    this.router.navigate(['/login']);
+  }
+
+  getToken(): string | null {
+    return localStorage.getItem(TOKEN_KEY);
+  }
+
+  private loadUser(): CurrentUser | null {
+    try {
+      const raw = localStorage.getItem(USER_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  }
+}
+</file>
+
+<file path="src/app/core/services/categoria.service.ts">
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+
+export interface CategoriaResponse { id: number; nombre: string; descripcion: string; }
+export interface CategoriaRequest { nombre: string; descripcion: string; }
+
+@Injectable({ providedIn: 'root' })
+export class CategoriaService {
+  private url = `${environment.apiUrl}/categorias`;
+  constructor(private http: HttpClient) {}
+  listar(): Observable<CategoriaResponse[]> { return this.http.get<CategoriaResponse[]>(this.url); }
+  crear(req: CategoriaRequest): Observable<CategoriaResponse> { return this.http.post<CategoriaResponse>(this.url, req); }
+  actualizar(id: number, req: CategoriaRequest): Observable<CategoriaResponse> { return this.http.put<CategoriaResponse>(`${this.url}/${id}`, req); }
+  eliminar(id: number): Observable<any> { return this.http.delete(`${this.url}/${id}`); }
+}
+</file>
+
+<file path="src/app/core/services/cliente.service.ts">
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+
+export interface ClienteResponse {
+  id: number; nombre: string; dni: string; telefono: string;
+  email: string; direccion: string; fechaNacimiento: string; activo: boolean;
+}
+export interface ClienteRequest {
+  nombre: string; dni: string; telefono: string;
+  email: string; direccion: string; fechaNacimiento: string;
+}
+
+@Injectable({ providedIn: 'root' })
+export class ClienteService {
+  private url = `${environment.apiUrl}/clientes`;
+  constructor(private http: HttpClient) {}
+  listar(): Observable<ClienteResponse[]> { return this.http.get<ClienteResponse[]>(this.url); }
+  buscar(nombre: string): Observable<ClienteResponse[]> { return this.http.get<ClienteResponse[]>(`${this.url}/buscar`, { params: { nombre } }); }
+  buscarPorDni(dni: string): Observable<ClienteResponse> { return this.http.get<ClienteResponse>(`${this.url}/dni/${dni}`); }
+  crear(req: ClienteRequest): Observable<ClienteResponse> { return this.http.post<ClienteResponse>(this.url, req); }
+  actualizar(id: number, req: ClienteRequest): Observable<ClienteResponse> { return this.http.put<ClienteResponse>(`${this.url}/${id}`, req); }
+  cambiarEstado(id: number, activo: boolean): Observable<ClienteResponse> {
+    return this.http.patch<ClienteResponse>(`${this.url}/${id}/estado`, null, { params: { activo } });
+  }
+}
+</file>
+
+<file path="src/app/core/services/dashboard.service.ts">
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { DashboardData, MedicamentoResponse } from '../models/dashboard.model';
+
+@Injectable({ providedIn: 'root' })
+export class DashboardService {
+
+  private readonly apiUrl = environment.apiUrl;
+
+  constructor(private http: HttpClient) {}
+
+  getResumen(): Observable<DashboardData> {
+    return this.http.get<DashboardData>(`${this.apiUrl}/dashboard`);
+  }
+
+  getStockBajo(): Observable<MedicamentoResponse[]> {
+    return this.http.get<MedicamentoResponse[]>(`${this.apiUrl}/medicamentos/stock-bajo`);
+  }
+
+  getPorVencer(dias: number = 30): Observable<MedicamentoResponse[]> {
+    return this.http.get<MedicamentoResponse[]>(
+      `${this.apiUrl}/medicamentos/por-vencer?dias=${dias}`
+    );
+  }
+}
+</file>
+
+<file path="src/app/core/services/medicamento.service.ts">
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+
+export interface MedicamentoResponse {
+  id: number; nombre: string; principioActivo: string;
+  presentacion: string; concentracion: string;
+  precioVenta: number; precioCompra: number;
+  stock: number; stockMinimo: number; stockBajo: boolean;
+  fechaVencimiento: string; requiereReceta: boolean; activo: boolean;
+  categoriaId: number; categoriaNombre: string;
+  proveedorId: number; proveedorNombre: string;
+}
+
+export interface PageResponse<T> {
+  contenido: T[]; paginaActual: number; totalPaginas: number;
+  totalElementos: number; tamanioPagina: number; esUltimaPagina: boolean;
+}
+
+export interface MedicamentoRequest {
+  nombre: string; principioActivo: string; presentacion: string;
+  concentracion: string; precioVenta: number; precioCompra: number;
+  stock: number; stockMinimo: number; fechaVencimiento: string;
+  requiereReceta: boolean; categoriaId: number; proveedorId: number;
+}
+
+@Injectable({ providedIn: 'root' })
+export class MedicamentoService {
+  private url = `${environment.apiUrl}/medicamentos`;
+  constructor(private http: HttpClient) {}
+
+  listar(pagina = 0, tamanio = 10): Observable<PageResponse<MedicamentoResponse>> {
+    const p = new HttpParams().set('pagina', pagina).set('tamanio', tamanio);
+    return this.http.get<PageResponse<MedicamentoResponse>>(this.url, { params: p });
+  }
+  buscar(q: string, pagina = 0, tamanio = 10): Observable<PageResponse<MedicamentoResponse>> {
+    const p = new HttpParams().set('q', q).set('pagina', pagina).set('tamanio', tamanio);
+    return this.http.get<PageResponse<MedicamentoResponse>>(`${this.url}/buscar`, { params: p });
+  }
+  stockBajo(): Observable<MedicamentoResponse[]> { return this.http.get<MedicamentoResponse[]>(`${this.url}/stock-bajo`); }
+  porVencer(dias = 30): Observable<MedicamentoResponse[]> {
+    return this.http.get<MedicamentoResponse[]>(`${this.url}/por-vencer`, { params: { dias } });
+  }
+  crear(req: MedicamentoRequest): Observable<MedicamentoResponse> { return this.http.post<MedicamentoResponse>(this.url, req); }
+  actualizar(id: number, req: MedicamentoRequest): Observable<MedicamentoResponse> { return this.http.put<MedicamentoResponse>(`${this.url}/${id}`, req); }
+  desactivar(id: number): Observable<any> { return this.http.delete(`${this.url}/${id}`); }
+}
+</file>
+
+<file path="src/app/core/services/proveedor.service.ts">
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+
+export interface ProveedorResponse {
+  id: number; nombre: string; ruc: string; direccion: string;
+  telefono: string; email: string; activo: boolean;
+}
+export interface ProveedorRequest { nombre: string; ruc: string; direccion: string; telefono: string; email: string; }
+
+@Injectable({ providedIn: 'root' })
+export class ProveedorService {
+  private url = `${environment.apiUrl}/proveedores`;
+  constructor(private http: HttpClient) {}
+  listar(): Observable<ProveedorResponse[]> { return this.http.get<ProveedorResponse[]>(this.url); }
+  crear(req: ProveedorRequest): Observable<ProveedorResponse> { return this.http.post<ProveedorResponse>(this.url, req); }
+  actualizar(id: number, req: ProveedorRequest): Observable<ProveedorResponse> { return this.http.put<ProveedorResponse>(`${this.url}/${id}`, req); }
+  cambiarEstado(id: number, activo: boolean): Observable<ProveedorResponse> {
+    return this.http.patch<ProveedorResponse>(`${this.url}/${id}/estado`, null, { params: { activo } });
+  }
+}
+</file>
+
+<file path="src/app/core/services/usuario.service.ts">
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+
+export interface UsuarioResponse { id: number; username: string; nombreCompleto: string; rol: string; activo: boolean; }
+export interface UsuarioRequest { username: string; password?: string; nombreCompleto: string; rol: string; }
+
+@Injectable({ providedIn: 'root' })
+export class UsuarioService {
+  private url = `${environment.apiUrl}/usuarios`;
+  constructor(private http: HttpClient) {}
+  listar(): Observable<UsuarioResponse[]> { return this.http.get<UsuarioResponse[]>(this.url); }
+  crear(req: UsuarioRequest): Observable<UsuarioResponse> { return this.http.post<UsuarioResponse>(this.url, req); }
+  actualizar(id: number, req: UsuarioRequest): Observable<UsuarioResponse> { return this.http.put<UsuarioResponse>(`${this.url}/${id}`, req); }
+  cambiarEstado(id: number, activo: boolean): Observable<UsuarioResponse> {
+    return this.http.patch<UsuarioResponse>(`${this.url}/${id}/estado`, null, { params: { activo } });
+  }
+}
+</file>
+
+<file path="src/app/core/services/venta.service.ts">
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+
+export interface DetalleVentaResponse {
+  id: number; medicamentoId: number; medicamentoNombre: string;
+  medicamentoPresentacion: string; cantidad: number;
+  precioUnitario: number; subtotal: number;
+}
+export interface VentaResponse {
+  id: number; clienteId: number; clienteNombre: string; clienteDni: string;
+  totalVenta: number; estado: string; observacion: string;
+  usuarioId: number; usuarioNombre: string; fechaVenta: string;
+  detalles: DetalleVentaResponse[];
+}
+export interface VentaRequest {
+  clienteId?: number; observacion?: string;
+  detalles: { medicamentoId: number; cantidad: number; }[];
+}
+
+@Injectable({ providedIn: 'root' })
+export class VentaService {
+  private url = `${environment.apiUrl}/ventas`;
+  constructor(private http: HttpClient) {}
+  listar(): Observable<VentaResponse[]> { return this.http.get<VentaResponse[]>(this.url); }
+  obtener(id: number): Observable<VentaResponse> { return this.http.get<VentaResponse>(`${this.url}/${id}`); }
+  registrar(req: VentaRequest): Observable<VentaResponse> { return this.http.post<VentaResponse>(this.url, req); }
+  anular(id: number): Observable<VentaResponse> { return this.http.patch<VentaResponse>(`${this.url}/${id}/anular`, {}); }
+}
+</file>
+
+<file path="src/app/features/auth/login/login.component.css">
+.login-wrapper {
+  display: flex;
+  min-height: 100vh;
+}
+
+
+.login-brand {
+  width: 42%;
+  background: linear-gradient(145deg, #14532d 0%, #16a34a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.brand-circle {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.12);
+}
+.c1 { width: 480px; height: 480px; top: -140px; right: -140px; }
+.c2 { width: 300px; height: 300px; bottom: -80px; left: -80px; }
+.c3 { width: 180px; height: 180px; top: 50%; right: -30px; transform: translateY(-50%); }
+
+.brand-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 48px;
+}
+
+.brand-icon {
+  width: 80px; height: 80px;
+  background: rgba(255,255,255,.2);
+  border-radius: 24px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 28px;
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: white;
+  border: 1px solid rgba(255,255,255,.25);
+}
+
+.brand-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 2.8rem;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 10px;
+  letter-spacing: -.02em;
+}
+.brand-subtitle {
+  font-size: 0.95rem;
+  color: rgba(255,255,255,.7);
+}
+
+
+.login-form-panel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f9fafb;
+  padding: 32px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0,0,0,.10);
+  padding: 44px 40px;
+  border: 1.5px solid #e5e7eb;
+}
+
+.login-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 6px;
+}
+.login-desc {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin-bottom: 28px;
+}
+
+
+.login-error {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 0.875rem;
+  margin-bottom: 20px;
+}
+
+
+.field {
+  margin-bottom: 20px;
+}
+.field label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 7px;
+}
+.field-input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  color: #111827;
+  background: #ffffff;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  font-family: 'Outfit', sans-serif;
+}
+.field-input:focus {
+  border-color: #16a34a;
+  box-shadow: 0 0 0 3px rgba(22,163,74,.12);
+}
+.field-error .field-input {
+  border-color: #ef4444;
+}
+.field-error .field-input:focus {
+  box-shadow: 0 0 0 3px rgba(239,68,68,.12);
+}
+
+.pass-wrap {
+  position: relative;
+}
+.pass-wrap .field-input {
+  padding-right: 44px;
+}
+.pass-toggle {
+  position: absolute;
+  right: 12px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 2px;
+  color: #9ca3af;
+}
+
+.field-msg {
+  display: block;
+  font-size: 0.76rem;
+  color: #ef4444;
+  margin-top: 5px;
+}
+
+
+.btn-login {
+  width: 100%;
+  padding: 13px;
+  margin-top: 8px;
+  background: #16a34a;
+  color: white;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: background .15s, transform .15s, box-shadow .15s;
+  box-shadow: 0 4px 14px rgba(22,163,74,.3);
+  font-family: 'Outfit', sans-serif;
+}
+.btn-login:hover:not(:disabled) {
+  background: #15803d;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(22,163,74,.35);
+}
+.btn-login:disabled {
+  opacity: .65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+
+@media (max-width: 768px) {
+  .login-brand { display: none; }
+  .login-form-panel { padding: 24px 16px; }
+  .login-card { padding: 32px 24px; }
+}
+</file>
+
+<file path="src/app/features/auth/login/login.component.html">
+<div class="login-wrapper">
+
+  <!-- Panel izquierdo -->
+  <div class="login-brand">
+    <div class="brand-circle c1"></div>
+    <div class="brand-circle c2"></div>
+    <div class="brand-circle c3"></div>
+    <div class="brand-content">
+      <div class="brand-icon">+</div>
+      <h1 class="brand-title">SaludPlus</h1>
+      <p class="brand-subtitle">Sistema de Gestión Farmacéutica</p>
+    </div>
+  </div>
+
+  <!-- Panel derecho -->
+  <div class="login-form-panel">
+    <div class="login-card fade-in">
+
+      <h2 class="login-title">Iniciar sesión</h2>
+      <p class="login-desc">Accede a tu cuenta para continuar</p>
+
+      @if (error()) {
+        <div class="login-error fade-in">
+          ⚠ {{ error() }}
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+
+        <div class="field" [class.field-error]="f['username'].invalid && f['username'].touched">
+          <label for="username">Usuario</label>
+          <input id="username" type="text" class="field-input"
+            formControlName="username"
+            placeholder="Ingresa tu usuario"
+            autocomplete="username"/>
+          @if (f['username'].hasError('required') && f['username'].touched) {
+            <span class="field-msg">El usuario es obligatorio</span>
+          }
+        </div>
+
+        <div class="field" [class.field-error]="f['password'].invalid && f['password'].touched">
+          <label for="password">Contraseña</label>
+          <div class="pass-wrap">
+            <input id="password" class="field-input"
+              [type]="showPass() ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="Ingresa tu contraseña"
+              autocomplete="current-password"/>
+            <button type="button" class="pass-toggle" (click)="showPass.set(!showPass())" tabindex="-1">
+              {{ showPass() ? '' : '👁' }}
+            </button>
+          </div>
+          @if (f['password'].hasError('required') && f['password'].touched) {
+            <span class="field-msg">La contraseña es obligatoria</span>
+          }
+        </div>
+
+        <button type="submit" class="btn-login" [disabled]="loading()">
+          @if (loading()) { Ingresando... } @else { Ingresar al sistema }
+        </button>
+
+      </form>
+    </div>
+  </div>
+</div>
+</file>
+
+<file path="src/app/features/auth/login/login.component.ts">
+import { Component, signal } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { AuthService } from '../../../core/services/auth.service';
+
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.css']
+})
+export class LoginComponent {
+  form: FormGroup;
+  loading  = signal(false);
+  error    = signal('');
+  showPass = signal(false);
+
+  constructor(
+    private fb:      FormBuilder,
+    private auth:    AuthService,
+    private router:  Router
+  ) {
+    // Si ya está autenticado, redirigir al dashboard
+    if (this.auth.isLoggedIn()) this.router.navigate(['/dashboard']);
+
+    this.form = this.fb.group({
+      username: ['', [Validators.required, Validators.minLength(3)]],
+      password: ['', [Validators.required, Validators.minLength(6)]]
+    });
+  }
+
+  get f() { return this.form.controls; }
+
+  onSubmit(): void {
+    if (this.form.invalid || this.loading()) return;
+    this.loading.set(true);
+    this.error.set('');
+
+    this.auth.login(this.form.value).subscribe({
+      next: () => this.router.navigate(['/dashboard']),
+      error: (err) => {
+        this.loading.set(false);
+        if (err.status === 401) {
+          this.error.set('Usuario o contraseña incorrectos.');
+        } else {
+          this.error.set('No se pudo conectar con el servidor.');
+        }
+      }
+    });
+  }
+}
+</file>
+
+<file path="src/app/features/categorias/categorias.component.css">
+
+</file>
+
+<file path="src/app/features/categorias/categorias.component.html">
+<div class="page fade-in">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">📦 Categorías</h1>
+      <p class="page-subtitle">Clasificación de medicamentos</p>
+    </div>
+    <button class="btn btn-primary" (click)="openCreate()">
+      <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+      Nueva Categoría
+    </button>
+  </div>
+
+  @if (success()) { <div class="alert alert-success" style="margin-bottom:16px">✓ {{ success() }}</div> }
+
+  @if (loading()) {
+    <div style="display:flex;justify-content:center;padding:60px"><div class="spinner"></div></div>
+  } @else {
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">
+      @for (c of items(); track c.id) {
+        <div class="card card-body" style="position:relative;padding:20px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:38px;height:38px;background:var(--accent-light);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem">💊</div>
+              <h3 style="font-size:.95rem;font-weight:700">{{ c.nombre }}</h3>
+            </div>
+            <button class="btn btn-ghost btn-icon btn-sm" (click)="openEdit(c)">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="14"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg>
+            </button>
+          </div>
+          <p style="font-size:.82rem;color:var(--gray-500);line-height:1.5">{{ c.descripcion || 'Sin descripción' }}</p>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+@if (showModal()) {
+  <div class="modal-overlay" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingId() ? 'Editar Categoría' : 'Nueva Categoría' }}</h2>
+        <button class="btn btn-ghost btn-icon" (click)="closeModal()">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="18"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        @if (error()) { <div class="alert alert-danger" style="margin-bottom:14px">{{ error() }}</div> }
+        <form [formGroup]="form">
+          <div class="form-group" style="margin-bottom:14px">
+            <label class="form-label">Nombre *</label>
+            <input class="form-control" formControlName="nombre" [class.is-invalid]="f['nombre'].invalid && f['nombre'].touched">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Descripción</label>
+            <textarea class="form-control" formControlName="descripcion" rows="3" style="resize:vertical"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" (click)="save()" [disabled]="form.invalid || saving()">
+          @if (saving()) { <div class="spinner spinner-sm"></div> }
+          Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+}
+</file>
+
+<file path="src/app/features/categorias/categorias.component.ts">
+import { Component, OnInit, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { CategoriaService, CategoriaResponse } from '../../core/services/categoria.service';
+
+@Component({
+  selector: 'app-categorias',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
+  templateUrl: './categorias.component.html',
+  styleUrls: ['./categorias.component.css']
+})
+export class CategoriasComponent implements OnInit {
+  items   = signal<CategoriaResponse[]>([]);
+  loading = signal(true); saving = signal(false);
+  showModal = signal(false); editingId = signal<number|null>(null);
+  error = signal(''); success = signal('');
+  form!: FormGroup;
+
+  constructor(private svc: CategoriaService, private fb: FormBuilder) {}
+
+  ngOnInit(): void {
+    this.form = this.fb.group({
+      nombre: ['', Validators.required],
+      descripcion: ['', Validators.maxLength(300)]
+    });
+    this.cargar();
+  }
+
+  cargar(): void {
+    this.loading.set(true);
+    this.svc.listar().subscribe({ next: r => { this.items.set(r); this.loading.set(false); }, error: () => this.loading.set(false) });
+  }
+
+  openCreate(): void { this.editingId.set(null); this.form.reset(); this.error.set(''); this.showModal.set(true); }
+  openEdit(c: CategoriaResponse): void { this.editingId.set(c.id); this.form.patchValue(c); this.error.set(''); this.showModal.set(true); }
+  closeModal(): void { this.showModal.set(false); }
+
+  save(): void {
+    if (this.form.invalid || this.saving()) return;
+    this.saving.set(true);
+    const obs = this.editingId() ? this.svc.actualizar(this.editingId()!, this.form.value) : this.svc.crear(this.form.value);
+    obs.subscribe({
+      next: () => { this.saving.set(false); this.showModal.set(false); this.success.set('Guardado.'); this.cargar(); setTimeout(() => this.success.set(''), 3000); },
+      error: (e) => { this.saving.set(false); this.error.set(e?.error?.mensaje || 'Error.'); }
+    });
+  }
+  get f() { return this.form.controls; }
+}
+</file>
+
+<file path="src/app/features/clientes/clientes.component.css">
+
+</file>
+
+<file path="src/app/features/clientes/clientes.component.html">
+<div class="page fade-in">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">👥 Clientes</h1>
+      <p class="page-subtitle">Registro y gestión de clientes</p>
+    </div>
+    <button class="btn btn-primary" (click)="openCreate()">
+      <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+      Nuevo Cliente
+    </button>
+  </div>
+
+  @if (success()) { <div class="alert alert-success fade-in" style="margin-bottom:16px">✓ {{ success() }}</div> }
+  @if (error() && !showModal()) { <div class="alert alert-danger fade-in" style="margin-bottom:16px">{{ error() }}</div> }
+
+  <div class="card">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="search-bar">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
+          <input class="search-input" type="text" placeholder="Buscar por nombre, DNI o email..." (input)="onSearch($event)">
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <span class="text-muted" style="font-size:.82rem">{{ filtered().length }} cliente{{ filtered().length !== 1 ? 's' : '' }}</span>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div style="display:flex;justify-content:center;padding:60px"><div class="spinner"></div></div>
+    } @else if (filtered().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="32"><path stroke-linecap="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div>
+        <p class="empty-title">Sin clientes</p>
+        <p class="empty-desc">Agrega el primer cliente registrado.</p>
+      </div>
+    } @else {
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>DNI</th>
+              <th>Contacto</th>
+              <th>Dirección</th>
+              <th>F. Nacimiento</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of filtered(); track c.id) {
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div style="width:34px;height:34px;background:var(--accent-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:700;color:var(--accent);font-size:.85rem;flex-shrink:0">
+                      {{ c.nombre.charAt(0) }}
+                    </div>
+                    <span style="font-weight:600">{{ c.nombre }}</span>
+                  </div>
+                </td>
+                <td style="font-family:monospace;font-size:.9rem;font-weight:600">{{ c.dni }}</td>
+                <td>
+                  @if (c.telefono) { <div style="font-size:.875rem">📞 {{ c.telefono }}</div> }
+                  @if (c.email) { <div style="font-size:.78rem;color:var(--gray-500)">{{ c.email }}</div> }
+                </td>
+                <td style="max-width:180px;font-size:.82rem;color:var(--gray-600)">{{ c.direccion || '—' }}</td>
+                <td style="font-size:.85rem">{{ c.fechaNacimiento ? (c.fechaNacimiento | date:'dd/MM/yyyy') : '—' }}</td>
+                <td>
+                  <button class="badge" style="cursor:pointer;border:none"
+                    [class.badge-success]="c.activo" [class.badge-gray]="!c.activo"
+                    (click)="toggleEstado(c)">
+                    {{ c.activo ? 'Activo' : 'Inactivo' }}
+                  </button>
+                </td>
+                <td>
+                  <button class="btn btn-ghost btn-icon btn-sm" (click)="openEdit(c)">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="15"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+@if (showModal()) {
+  <div class="modal-overlay" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingId() ? 'Editar Cliente' : 'Nuevo Cliente' }}</h2>
+        <button class="btn btn-ghost btn-icon" (click)="closeModal()">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="18"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        @if (error()) { <div class="alert alert-danger" style="margin-bottom:14px">{{ error() }}</div> }
+        <form [formGroup]="form">
+          <div class="form-grid">
+            <div class="form-group col-span-2">
+              <label class="form-label">Nombre completo *</label>
+              <input class="form-control" formControlName="nombre" [class.is-invalid]="f['nombre'].invalid && f['nombre'].touched" placeholder="Juan Pérez Torres">
+            </div>
+            <div class="form-group">
+              <label class="form-label">DNI *</label>
+              <input class="form-control" formControlName="dni" [class.is-invalid]="f['dni'].invalid && f['dni'].touched" placeholder="12345678" maxlength="8">
+              @if (f['dni'].errors?.['pattern'] && f['dni'].touched) { <span class="form-error">Debe tener exactamente 8 dígitos</span> }
+            </div>
+            <div class="form-group">
+              <label class="form-label">Teléfono</label>
+              <input class="form-control" formControlName="telefono" placeholder="987654321">
+            </div>
+            <div class="form-group col-span-2">
+              <label class="form-label">Email</label>
+              <input class="form-control" type="email" formControlName="email" [class.is-invalid]="f['email'].invalid && f['email'].touched">
+            </div>
+            <div class="form-group col-span-2">
+              <label class="form-label">Dirección</label>
+              <input class="form-control" formControlName="direccion" placeholder="Jr. Los Pinos 123, Surco">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fecha de Nacimiento</label>
+              <input class="form-control" type="date" formControlName="fechaNacimiento">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" (click)="save()" [disabled]="form.invalid || saving()">
+          @if (saving()) { <div class="spinner spinner-sm"></div> }
+          {{ editingId() ? 'Actualizar' : 'Crear' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+</file>
+
+<file path="src/app/features/clientes/clientes.component.ts">
+import { Component, OnInit, signal } from '@angular/core';
+import { CommonModule, DatePipe } from '@angular/common';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ClienteService, ClienteResponse, ClienteRequest } from '../../core/services/cliente.service';
+
+@Component({
+  selector: 'app-clientes',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, DatePipe],
+  templateUrl: './clientes.component.html',
+  styleUrls: ['./clientes.component.css']
+})
+export class ClientesComponent implements OnInit {
+  items   = signal<ClienteResponse[]>([]);
+  filtered = signal<ClienteResponse[]>([]);
+  loading = signal(true); saving = signal(false);
+  showModal = signal(false); showConfirm = signal(false);
+  editingId = signal<number|null>(null); changingId = signal<number|null>(null);
+  error = signal(''); success = signal('');
+  searchQ = signal('');
+  form!: FormGroup;
+
+  constructor(private svc: ClienteService, private fb: FormBuilder) {}
+
+  ngOnInit(): void {
+    this.form = this.fb.group({
+      nombre: ['', Validators.required],
+      dni: ['', [Validators.required, Validators.pattern(/^\d{8}$/)]],
+      telefono: [''], email: ['', Validators.email],
+      direccion: [''], fechaNacimiento: ['']
+    });
+    this.cargar();
+  }
+
+  cargar(): void {
+    this.loading.set(true);
+    this.svc.listar().subscribe({
+      next: r => { this.items.set(r); this.filter(); this.loading.set(false); },
+      error: () => { this.error.set('Error al cargar.'); this.loading.set(false); }
+    });
+  }
+
+  filter(): void {
+    const q = this.searchQ().toLowerCase();
+    if (!q) { this.filtered.set(this.items()); return; }
+    this.filtered.set(this.items().filter(c =>
+      c.nombre.toLowerCase().includes(q) || c.dni.includes(q) ||
+      (c.email || '').toLowerCase().includes(q)
+    ));
+  }
+
+  onSearch(e: Event): void { this.searchQ.set((e.target as HTMLInputElement).value); this.filter(); }
+  openCreate(): void { this.editingId.set(null); this.form.reset(); this.error.set(''); this.showModal.set(true); }
+  openEdit(c: ClienteResponse): void { this.editingId.set(c.id); this.form.patchValue({...c}); this.error.set(''); this.showModal.set(true); }
+  closeModal(): void { this.showModal.set(false); }
+
+  save(): void {
+    if (this.form.invalid || this.saving()) return;
+    this.saving.set(true);
+    const obs = this.editingId() ? this.svc.actualizar(this.editingId()!, this.form.value) : this.svc.crear(this.form.value);
+    obs.subscribe({
+      next: () => { this.saving.set(false); this.showModal.set(false); this.success.set('Guardado.'); this.cargar(); setTimeout(() => this.success.set(''), 3000); },
+      error: (e) => { this.saving.set(false); this.error.set(e?.error?.mensaje || 'Error.'); }
+    });
+  }
+
+  toggleEstado(c: ClienteResponse): void {
+    this.svc.cambiarEstado(c.id, !c.activo).subscribe({ next: () => this.cargar() });
+  }
+  get f() { return this.form.controls; }
+}
+</file>
+
+<file path="src/app/features/dashboard/dashboard.component.css">
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.kpi-card {
+  display: flex; align-items: center; gap: 16px;
+  padding: 20px;
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--gray-200);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  color: inherit;
+  transition: var(--transition);
+  position: relative; overflow: hidden;
+}
+.kpi-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 3px; border-radius: 2px 2px 0 0;
+}
+.kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+
+.kpi-green::before  { background: var(--accent); }
+.kpi-blue::before   { background: var(--info); }
+.kpi-purple::before { background: #8b5cf6; }
+.kpi-orange::before { background: var(--warning); }
+
+.kpi-icon {
+  width: 46px; height: 46px; border-radius: var(--radius);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.kpi-green  .kpi-icon { background: var(--accent-light); color: var(--accent); }
+.kpi-blue   .kpi-icon { background: var(--info-light);   color: var(--info); }
+.kpi-purple .kpi-icon { background: #ede9fe; color: #7c3aed; }
+.kpi-orange .kpi-icon { background: var(--warning-light); color: #d97706; }
+
+.kpi-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--gray-500); margin-bottom: 2px; }
+.kpi-value { font-family: 'Sora', sans-serif; font-size: 2rem; font-weight: 800; color: var(--gray-900); line-height: 1.1; }
+.kpi-sub   { font-size: .78rem; color: var(--gray-500); margin-top: 2px; }
+
+.alerts-row {
+  display: flex; flex-direction: column; gap: 8px;
+  margin-bottom: 16px;
+}
+.alert-banner {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; border-radius: var(--radius);
+  font-size: .875rem; font-weight: 500;
+  text-decoration: none;
+  transition: var(--transition);
+}
+.alert-banner:hover { filter: brightness(.97); }
+.alert-banner.alert-danger  { background: var(--danger-light); color: #dc2626; border: 1px solid #fecaca; }
+.alert-banner.alert-warning { background: var(--warning-light); color: #b45309; border: 1px solid #fde68a; }
+
+.tables-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 768px) {
+  .kpi-grid    { grid-template-columns: 1fr 1fr; }
+  .tables-row  { grid-template-columns: 1fr; }
+  .kpi-value   { font-size: 1.6rem; }
+}
+@media (max-width: 480px) {
+  .kpi-grid { grid-template-columns: 1fr; }
+}
+</file>
+
+<file path="src/app/features/dashboard/dashboard.component.html">
+<div class="page fade-in">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Bienvenido, {{ (auth.currentUser()?.nombreCompleto || '').split(' ')[0] }} 👋</h1>
+      <p class="page-subtitle">{{ today | date:'EEEE, d \'de\' MMMM yyyy' }} · Resumen del sistema</p>
+    </div>
+    <button class="btn btn-secondary" (click)="cargar()">
+      <svg viewBox="0 0 20 20" fill="currentColor" width="15"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/></svg>
+      Actualizar
+    </button>
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-danger fade-in" style="margin-bottom:20px">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div style="display:flex;justify-content:center;padding:80px"><div class="spinner"></div></div>
+  } @else if (data()) {
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid fade-in-2">
+      <a class="kpi-card kpi-green" routerLink="/ventas">
+        <div class="kpi-icon">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="22"><path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-label">Ventas hoy</div>
+          <div class="kpi-value">{{ data()!.ventasHoy }}</div>
+          <div class="kpi-sub">S/. {{ data()!.totalVentasHoy | number:'1.2-2' }}</div>
+        </div>
+      </a>
+
+      <a class="kpi-card kpi-blue" routerLink="/ventas">
+        <div class="kpi-icon">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="22"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clip-rule="evenodd"/></svg>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-label">Ventas del mes</div>
+          <div class="kpi-value">{{ data()!.ventasMes }}</div>
+          <div class="kpi-sub">S/. {{ data()!.totalVentasMes | number:'1.2-2' }}</div>
+        </div>
+      </a>
+
+      <a class="kpi-card kpi-purple" routerLink="/medicamentos">
+        <div class="kpi-icon">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="22"><path fill-rule="evenodd" d="M11.47 2.47a.75.75 0 011.06 0l5 5a.75.75 0 010 1.06l-10 10a.75.75 0 01-1.06 0l-5-5a.75.75 0 010-1.06l10-10zm.97 8.5l-1.5-1.5L7 13.44l1.5 1.5 3.94-3.97zM5.47 8.53l3.5 3.5L10.44 10.5 6.94 7 5.47 8.53z" clip-rule="evenodd"/></svg>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-label">Medicamentos</div>
+          <div class="kpi-value">{{ data()!.totalMedicamentos }}</div>
+          <div class="kpi-sub">en inventario</div>
+        </div>
+      </a>
+
+      <a class="kpi-card kpi-orange" routerLink="/clientes">
+        <div class="kpi-icon">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="22"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-label">Clientes</div>
+          <div class="kpi-value">{{ data()!.totalClientes }}</div>
+          <div class="kpi-sub">registrados</div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Alertas row -->
+    @if (data()!.medicamentosStockBajo > 0 || data()!.medicamentosProximosAVencer > 0) {
+      <div class="alerts-row fade-in-3">
+        @if (data()!.medicamentosStockBajo > 0) {
+          <a class="alert-banner alert-danger" routerLink="/medicamentos">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="18"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+            <strong>{{ data()!.medicamentosStockBajo }}</strong> medicamento(s) con stock bajo
+            <svg viewBox="0 0 20 20" fill="currentColor" width="14" style="margin-left:auto"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+          </a>
+        }
+        @if (data()!.medicamentosProximosAVencer > 0) {
+          <a class="alert-banner alert-warning" routerLink="/medicamentos">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="18"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+            <strong>{{ data()!.medicamentosProximosAVencer }}</strong> medicamento(s) próximos a vencer (60d)
+            <svg viewBox="0 0 20 20" fill="currentColor" width="14" style="margin-left:auto"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+          </a>
+        }
+      </div>
+    }
+
+    <!-- Tables row -->
+    <div class="tables-row fade-in-4">
+      <!-- Stock bajo -->
+      <div class="card">
+        <div class="card-header">
+          <h3>⚠️ Stock Bajo</h3>
+          <a routerLink="/medicamentos" class="btn btn-ghost btn-sm">Ver todos</a>
+        </div>
+        @if (stockBajo().length === 0) {
+          <div class="empty-state" style="padding:32px">
+            <p class="text-muted" style="font-size:.875rem">✅ Todos los medicamentos tienen stock suficiente</p>
+          </div>
+        } @else {
+          <div class="table-wrapper">
+            <table class="table">
+              <thead><tr><th>Medicamento</th><th>Stock</th></tr></thead>
+              <tbody>
+                @for (m of stockBajo(); track m.id) {
+                  <tr>
+                    <td>
+                      <div style="font-weight:600;font-size:.85rem">{{ m.nombre }}</div>
+                      <div style="font-size:.72rem;color:var(--gray-500)">{{ m.categoriaNombre }}</div>
+                    </td>
+                    <td>
+                      <div class="stock-bar-wrap">
+                        <div class="stock-bar"><div class="stock-bar-fill {{ stockClass(m) }}" [style.width]="stockPct(m)+'%'"></div></div>
+                        <span style="font-size:.82rem;font-weight:700;color:var(--danger)">{{ m.stock }}</span>
+                      </div>
+                      <div style="font-size:.7rem;color:var(--gray-500)">Mín: {{ m.stockMinimo }}</div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <!-- Por vencer -->
+      <div class="card">
+        <div class="card-header">
+          <h3>📅 Próximos a Vencer</h3>
+          <a routerLink="/medicamentos" class="btn btn-ghost btn-sm">Ver todos</a>
+        </div>
+        @if (porVencer().length === 0) {
+          <div class="empty-state" style="padding:32px">
+            <p class="text-muted" style="font-size:.875rem">✅ Ningún medicamento vence en los próximos 60 días</p>
+          </div>
+        } @else {
+          <div class="table-wrapper">
+            <table class="table">
+              <thead><tr><th>Medicamento</th><th>Vence</th></tr></thead>
+              <tbody>
+                @for (m of porVencer(); track m.id) {
+                  <tr>
+                    <td>
+                      <div style="font-weight:600;font-size:.85rem">{{ m.nombre }}</div>
+                      <div style="font-size:.72rem;color:var(--gray-500)">{{ m.categoriaNombre }}</div>
+                    </td>
+                    <td>
+                      <div style="font-size:.82rem">{{ m.fechaVencimiento | date:'dd/MM/yyyy' }}</div>
+                      <span [class]="'badge ' + urgenciaBadge(diasParaVencer(m.fechaVencimiento))" style="font-size:.65rem;margin-top:2px">{{ diasParaVencer(m.fechaVencimiento) }}d</span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>
+</file>
+
+<file path="src/app/features/dashboard/dashboard.component.ts">
+import { Component, OnInit, signal } from "@angular/core";
+import { CommonModule, CurrencyPipe, DatePipe, DecimalPipe } from "@angular/common";
+import { RouterLink } from "@angular/router";
+import { DashboardService } from "../../core/services/dashboard.service";
+import { AuthService } from "../../core/services/auth.service";
+import { DashboardData, MedicamentoResponse } from "../../core/models/dashboard.model";
+
+@Component({
+  selector: "app-dashboard",
+  standalone: true,
+  imports: [CommonModule, RouterLink, CurrencyPipe, DatePipe, DecimalPipe],
+  templateUrl: "./dashboard.component.html",
+  styleUrls: ["./dashboard.component.css"]
+})
+export class DashboardComponent implements OnInit {
+  data      = signal<DashboardData | null>(null);
+  stockBajo = signal<MedicamentoResponse[]>([]);
+  porVencer = signal<MedicamentoResponse[]>([]);
+  loading   = signal(true);
+  error     = signal("");
+  today     = new Date();
+
+  constructor(private dashSvc: DashboardService, readonly auth: AuthService) {}
+
+  ngOnInit(): void { this.cargar(); }
+
+  cargar(): void {
+    this.loading.set(true);
+    this.dashSvc.getResumen().subscribe({
+      next: r => { this.data.set(r); this.loading.set(false); },
+      error: () => { this.error.set("No se pudo cargar el dashboard."); this.loading.set(false); }
+    });
+    this.dashSvc.getStockBajo().subscribe({ next: l => this.stockBajo.set(l.slice(0, 6)) });
+    this.dashSvc.getPorVencer(60).subscribe({ next: l => this.porVencer.set(l.slice(0, 6)) });
+  }
+
+  diasParaVencer(fecha: string): number {
+    return Math.ceil((new Date(fecha).getTime() - Date.now()) / 86400000);
+  }
+  urgenciaBadge(dias: number): string {
+    if (dias <= 7) return "badge-danger"; if (dias <= 30) return "badge-warning"; return "badge-info";
+  }
+  stockPct(med: MedicamentoResponse): number {
+    if (!med.stockMinimo) return 100;
+    return Math.min(100, Math.round((med.stock / (med.stockMinimo * 4)) * 100));
+  }
+  stockClass(med: MedicamentoResponse): string {
+    const p = this.stockPct(med); return p <= 25 ? 'danger' : p <= 50 ? 'warn' : 'ok';
+  }
+}
+</file>
+
+<file path="src/app/features/layout/layout.component.css">
+/* ── Shell ── */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ── Navbar ── */
+.navbar {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--accent);
+  box-shadow: 0 2px 12px rgba(22,163,74,.25);
+}
+
+.navbar-inner {
+  display: flex; align-items: center;
+  height: var(--navbar-h);
+  padding: 0 24px;
+  gap: 8px;
+  max-width: 1600px; margin: 0 auto; width: 100%;
+}
+
+/* Brand */
+.navbar-brand {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; flex-shrink: 0;
+}
+.brand-icon {
+  width: 34px; height: 34px;
+  background: rgba(255,255,255,.2);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+}
+.brand-icon svg { width: 18px; height: 18px; }
+.brand-name {
+  font-family: 'Sora', sans-serif;
+  font-size: 1.1rem; font-weight: 800;
+  color: white; letter-spacing: -.01em;
+}
+
+/* Nav links */
+.navbar-nav {
+  display: flex; align-items: center;
+  margin-left: 24px; gap: 2px; flex: 1;
+}
+.nav-link {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 13px; border-radius: 8px;
+  font-size: 0.85rem; font-weight: 600;
+  color: rgba(255,255,255,.75);
+  text-decoration: none;
+  transition: all .15s ease;
+  white-space: nowrap;
+}
+.nav-link:hover {
+  background: rgba(255,255,255,.15);
+  color: white;
+}
+.nav-link.active {
+  background: rgba(255,255,255,.22);
+  color: white;
+  box-shadow: 0 1px 4px rgba(0,0,0,.12);
+}
+.nav-link-icon { display: flex; align-items: center; flex-shrink: 0; }
+
+/* End */
+.navbar-end {
+  display: flex; align-items: center; gap: 10px;
+  margin-left: auto; flex-shrink: 0;
+}
+
+.user-pill {
+  display: flex; align-items: center; gap: 10px;
+  padding: 5px 12px 5px 6px;
+  background: rgba(255,255,255,.15);
+  border-radius: 40px;
+}
+.user-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(255,255,255,.3);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Sora', sans-serif;
+  font-size: 0.85rem; font-weight: 700; color: white;
+  flex-shrink: 0;
+}
+.user-info { display: flex; flex-direction: column; gap: 1px; }
+.user-name { font-size: 0.8rem; font-weight: 600; color: white; line-height: 1.2; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-info .badge { font-size: 0.65rem; padding: 1px 7px; }
+.user-info .badge-success { background: rgba(255,255,255,.25); color: white; }
+.user-info .badge-gray    { background: rgba(0,0,0,.2); color: rgba(255,255,255,.8); }
+
+.btn-logout {
+  width: 34px; height: 34px; border-radius: 8px;
+  background: rgba(255,255,255,.15);
+  color: rgba(255,255,255,.8);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; border: none; transition: all .15s ease;
+  flex-shrink: 0;
+}
+.btn-logout:hover { background: rgba(255,255,255,.25); color: white; }
+
+/* Mobile burger */
+.mobile-burger {
+  display: none;
+  width: 36px; height: 36px; border-radius: 8px;
+  background: rgba(255,255,255,.15);
+  color: white; border: none; cursor: pointer;
+  align-items: center; justify-content: center;
+  transition: all .15s ease;
+}
+.mobile-burger:hover { background: rgba(255,255,255,.25); }
+
+/* Mobile nav */
+.mobile-nav {
+  display: flex; flex-direction: column;
+  padding: 8px 16px 16px;
+  border-top: 1px solid rgba(255,255,255,.15);
+  background: var(--accent-dark);
+  animation: slideDown .2s ease;
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.mobile-nav-link {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 12px; border-radius: 8px;
+  color: rgba(255,255,255,.8); text-decoration: none;
+  font-size: 0.9rem; font-weight: 600; transition: all .15s ease;
+}
+.mobile-nav-link:hover, .mobile-nav-link.active {
+  background: rgba(255,255,255,.15); color: white;
+}
+.mobile-logout {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 12px; border-radius: 8px; margin-top: 4px;
+  color: rgba(255,255,255,.65); background: transparent; border: none;
+  font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all .15s ease;
+  text-align: left;
+}
+.mobile-logout:hover { background: rgba(255,255,255,.1); color: white; }
+
+/* ── Main content ── */
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .navbar-nav, .user-pill, .btn-logout { display: none; }
+  .mobile-burger { display: flex; }
+  .navbar-inner { justify-content: space-between; }
+}
+@media (min-width: 901px) {
+  .mobile-nav { display: none; }
+}
+</file>
+
+<file path="src/app/features/layout/layout.component.html">
+<div class="app-shell">
+
+  <!-- ══ NAVBAR ══ -->
+  <header class="navbar">
+    <div class="navbar-inner">
+
+      <!-- Logo -->
+      <a routerLink="/dashboard" class="navbar-brand">
+        <div class="brand-icon">+</div>
+        <span class="brand-name">SaludPlus</span>
+      </a>
+
+      <!-- Nav links desktop -->
+      <nav class="navbar-nav">
+        @for (item of visibleNav(); track item.route) {
+          <a [routerLink]="item.route" routerLinkActive="active" class="nav-link">
+            <span class="nav-emoji">{{ item.emoji }}</span>
+            <span>{{ item.label }}</span>
+          </a>
+        }
+      </nav>
+
+      <!-- Derecha -->
+      <div class="navbar-end">
+        <div class="user-pill">
+          <div class="user-avatar">{{ auth.currentUser()?.nombreCompleto?.charAt(0) }}</div>
+          <div class="user-info">
+            <span class="user-name">{{ auth.currentUser()?.nombreCompleto }}</span>
+            <span class="user-role" [class.is-admin]="auth.isAdmin()">
+              {{ auth.currentUser()?.rol }}
+            </span>
+          </div>
+        </div>
+        <button class="btn-logout" (click)="auth.logout()" title="Cerrar sesión">✕</button>
+
+        <!-- Burger móvil -->
+        <button class="mobile-burger" (click)="mobileMenuOpen.set(!mobileMenuOpen())">
+          {{ mobileMenuOpen() ? '✕' : '☰' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Menú móvil -->
+    @if (mobileMenuOpen()) {
+      <nav class="mobile-nav">
+        @for (item of visibleNav(); track item.route) {
+          <a [routerLink]="item.route" routerLinkActive="active"
+             class="mobile-nav-link" (click)="mobileMenuOpen.set(false)">
+            {{ item.emoji }} {{ item.label }}
+          </a>
+        }
+        <button class="mobile-logout" (click)="auth.logout()">✕ Cerrar sesión</button>
+      </nav>
+    }
+  </header>
+
+  <!-- ══ CONTENIDO ══ -->
+  <main class="main-content">
+    <router-outlet />
+  </main>
+
+</div>
+</file>
+
+<file path="src/app/features/layout/layout.component.ts">
+import { Component, signal, HostListener } from "@angular/core";
+import { RouterOutlet, RouterLink, RouterLinkActive } from "@angular/router";
+import { CommonModule } from "@angular/common";
+import { AuthService } from "../../core/services/auth.service";
+
+@Component({
+  selector: "app-layout",
+  standalone: true,
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  templateUrl: "./layout.component.html",
+  styleUrls: ["./layout.component.css"]
+})
+export class LayoutComponent {
+  mobileMenuOpen = signal(false);
+
+  readonly nav = [
+    { emoji: "🏠", label: "Dashboard",    route: "/dashboard" },
+    { emoji: "💊", label: "Medicamentos", route: "/medicamentos" },
+    { emoji: "👥", label: "Clientes",     route: "/clientes" },
+    { emoji: "🛒", label: "Ventas",       route: "/ventas" },
+    { emoji: "📦", label: "Categorías",   route: "/categorias" },
+    { emoji: "🚚", label: "Proveedores",  route: "/proveedores" },
+    { emoji: "🛡️", label: "Usuarios",     route: "/usuarios", adminOnly: true }
+  ];
+
+  constructor(readonly auth: AuthService) {}
+
+  visibleNav() {
+    return this.nav.filter(n => !n.adminOnly || this.auth.isAdmin());
+  }
+
+  @HostListener("document:keydown.escape")
+  closeMobile() { this.mobileMenuOpen.set(false); }
+}
+</file>
+
+<file path="src/app/features/medicamentos/medicamentos.component.css">
+
+</file>
+
+<file path="src/app/features/medicamentos/medicamentos.component.html">
+<div class="page fade-in">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">💊 Medicamentos</h1>
+      <p class="page-subtitle">Gestión de inventario farmacéutico</p>
+    </div>
+    <button class="btn btn-primary" (click)="openCreate()">
+      <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+      Nuevo Medicamento
+    </button>
+  </div>
+
+  @if (success()) {
+    <div class="alert alert-success fade-in" style="margin-bottom:16px">
+      <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+      {{ success() }}
+    </div>
+  }
+
+  <div class="card">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="search-bar">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
+          <input class="search-input" type="text" placeholder="Buscar medicamento..." [value]="searchTerm()" (input)="onSearch($event)">
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <span class="text-muted" style="font-size:.82rem">{{ total() }} resultado{{ total() !== 1 ? 's' : '' }}</span>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div style="display:flex;justify-content:center;padding:60px"><div class="spinner"></div></div>
+    } @else if (items().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="32"><path stroke-linecap="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+        </div>
+        <p class="empty-title">Sin resultados</p>
+        <p class="empty-desc">No se encontraron medicamentos.</p>
+      </div>
+    } @else {
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Medicamento</th>
+              <th>Categoría</th>
+              <th>Stock</th>
+              <th>Precio</th>
+              <th>Vencimiento</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of items(); track m.id) {
+              <tr>
+                <td>
+                  <div style="font-weight:600;color:var(--gray-900)">{{ m.nombre }}</div>
+                  <div style="font-size:.78rem;color:var(--gray-500)">{{ m.principioActivo }} · {{ m.presentacion }}</div>
+                  @if (m.requiereReceta) {
+                    <span class="badge badge-warning" style="margin-top:3px;font-size:.65rem">🩺 Receta</span>
+                  }
+                </td>
+                <td><span class="badge badge-info">{{ m.categoriaNombre }}</span></td>
+                <td style="min-width:130px">
+                  <div class="stock-bar-wrap">
+                    <div class="stock-bar">
+                      <div class="stock-bar-fill {{ stockClass(m) }}" [style.width]="stockPct(m) + '%'"></div>
+                    </div>
+                    <span style="font-size:.82rem;font-weight:600;min-width:28px;text-align:right"
+                          [class.text-danger]="m.stockBajo">{{ m.stock }}</span>
+                  </div>
+                  @if (m.stockBajo) {
+                    <div style="font-size:.7rem;color:var(--danger)">⚠ Stock bajo (mín {{ m.stockMinimo }})</div>
+                  }
+                </td>
+                <td>
+                  <div style="font-weight:700;color:var(--accent)">S/. {{ m.precioVenta | number:'1.2-2' }}</div>
+                  @if (m.precioCompra) {
+                    <div style="font-size:.75rem;color:var(--gray-500)">Compra: S/. {{ m.precioCompra | number:'1.2-2' }}</div>
+                  }
+                </td>
+                <td>
+                  @if (m.fechaVencimiento) {
+                    <div [class.text-danger]="diasVencer(m.fechaVencimiento) <= 30" [class.text-warning]="diasVencer(m.fechaVencimiento) > 30 && diasVencer(m.fechaVencimiento) <= 90">
+                      {{ m.fechaVencimiento | date:'dd/MM/yyyy' }}
+                    </div>
+                    @if (diasVencer(m.fechaVencimiento) <= 90) {
+                      <div style="font-size:.72rem" [class.text-danger]="diasVencer(m.fechaVencimiento) <= 30">{{ diasVencer(m.fechaVencimiento) }}d restantes</div>
+                    }
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+                <td>
+                  <span class="badge" [class.badge-success]="m.activo" [class.badge-gray]="!m.activo">
+                    {{ m.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td>
+                  <div style="display:flex;gap:6px">
+                    <button class="btn btn-ghost btn-icon btn-sm" title="Editar" (click)="openEdit(m)">
+                      <svg viewBox="0 0 20 20" fill="currentColor" width="15"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg>
+                    </button>
+                    <button class="btn btn-ghost btn-icon btn-sm" title="Desactivar" (click)="confirmDelete(m.id)" style="color:var(--danger)">
+                      <svg viewBox="0 0 20 20" fill="currentColor" width="15"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (totalPag() > 1) {
+        <div class="pagination">
+          <span class="pagination-info">
+            Página {{ pagina() + 1 }} de {{ totalPag() }} · {{ total() }} registros
+          </span>
+          <div class="pagination-btns">
+            <button class="page-btn" (click)="ir(pagina() - 1)" [disabled]="pagina() === 0">‹</button>
+            @for (p of pages(); track p) {
+              <button class="page-btn" [class.active]="p === pagina()" (click)="ir(p)">{{ p + 1 }}</button>
+            }
+            <button class="page-btn" (click)="ir(pagina() + 1)" [disabled]="pagina() >= totalPag() - 1">›</button>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>
+
+<!-- Modal Crear/Editar -->
+@if (showModal()) {
+  <div class="modal-overlay" (click)="closeModal()">
+    <div class="modal modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingId() ? 'Editar Medicamento' : 'Nuevo Medicamento' }}</h2>
+        <button class="btn btn-ghost btn-icon" (click)="closeModal()">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="18"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        @if (error()) {
+          <div class="alert alert-danger" style="margin-bottom:16px">{{ error() }}</div>
+        }
+        <form [formGroup]="form">
+          <div class="form-grid" style="margin-bottom:14px">
+            <div class="form-group col-span-2">
+              <label class="form-label">Nombre *</label>
+              <input class="form-control" formControlName="nombre" [class.is-invalid]="f['nombre'].invalid && f['nombre'].touched" placeholder="Paracetamol 500mg">
+              @if (f['nombre'].invalid && f['nombre'].touched) { <span class="form-error">Requerido</span> }
+            </div>
+            <div class="form-group">
+              <label class="form-label">Principio Activo *</label>
+              <input class="form-control" formControlName="principioActivo" placeholder="Paracetamol">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Presentación</label>
+              <input class="form-control" formControlName="presentacion" placeholder="Tabletas, Cápsulas...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Concentración</label>
+              <input class="form-control" formControlName="concentracion" placeholder="500mg">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fecha Vencimiento</label>
+              <input class="form-control" type="date" formControlName="fechaVencimiento">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Precio Venta (S/.) *</label>
+              <input class="form-control" type="number" step="0.01" formControlName="precioVenta">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Precio Compra (S/.)</label>
+              <input class="form-control" type="number" step="0.01" formControlName="precioCompra">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Stock Actual *</label>
+              <input class="form-control" type="number" formControlName="stock">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Stock Mínimo</label>
+              <input class="form-control" type="number" formControlName="stockMinimo">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Categoría *</label>
+              <select class="form-control filter-select" formControlName="categoriaId" style="padding:10px 14px">
+                <option value="">Seleccionar...</option>
+                @for (c of categorias(); track c.id) {
+                  <option [value]="c.id">{{ c.nombre }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Proveedor *</label>
+              <select class="form-control filter-select" formControlName="proveedorId" style="padding:10px 14px">
+                <option value="">Seleccionar...</option>
+                @for (p of proveedores(); track p.id) {
+                  <option [value]="p.id">{{ p.nombre }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group" style="grid-column:span 2;flex-direction:row;align-items:center;gap:12px;padding:12px;background:var(--gray-50);border-radius:var(--radius)">
+              <input type="checkbox" id="receta" formControlName="requiereReceta" style="width:16px;height:16px;accent-color:var(--accent)">
+              <label for="receta" style="font-size:.875rem;font-weight:500;cursor:pointer">Requiere receta médica</label>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" (click)="save()" [disabled]="form.invalid || saving()">
+          @if (saving()) { <div class="spinner spinner-sm"></div> }
+          {{ editingId() ? 'Actualizar' : 'Crear' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Confirm Delete -->
+@if (showConfirm()) {
+  <div class="modal-overlay" (click)="cancelDelete()">
+    <div class="modal" style="max-width:420px" (click)="$event.stopPropagation()">
+      <div class="modal-body" style="padding:32px;text-align:center">
+        <div style="width:56px;height:56px;background:var(--danger-light);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="26" style="color:var(--danger)"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+        </div>
+        <h2 style="font-size:1.1rem;margin-bottom:8px">¿Desactivar medicamento?</h2>
+        <p style="color:var(--gray-500);font-size:.875rem">El medicamento quedará inactivo pero se mantendrán los registros de ventas.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cancelDelete()">Cancelar</button>
+        <button class="btn btn-danger" (click)="doDelete()">Desactivar</button>
+      </div>
+    </div>
+  </div>
+}
+</file>
+
+<file path="src/app/features/medicamentos/medicamentos.component.ts">
+import { Component, OnInit, signal } from '@angular/core';
+import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MedicamentoService, MedicamentoResponse, MedicamentoRequest } from '../../core/services/medicamento.service';
+import { CategoriaService, CategoriaResponse } from '../../core/services/categoria.service';
+import { ProveedorService, ProveedorResponse } from '../../core/services/proveedor.service';
+import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
+
+@Component({
+  selector: 'app-medicamentos',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, CurrencyPipe, DatePipe],
+  templateUrl: './medicamentos.component.html',
+  styleUrls: ['./medicamentos.component.css']
+})
+export class MedicamentosComponent implements OnInit {
+  items       = signal<MedicamentoResponse[]>([]);
+  categorias  = signal<CategoriaResponse[]>([]);
+  proveedores = signal<ProveedorResponse[]>([]);
+  loading = signal(true); saving = signal(false);
+  showModal = signal(false); showConfirm = signal(false);
+  editingId = signal<number|null>(null); deletingId = signal<number|null>(null);
+  error = signal(''); success = signal('');
+  pagina = signal(0); total = signal(0); totalPag = signal(0);
+  tamanio = 10; searchTerm = signal('');
+  private search$ = new Subject<string>();
+  form!: FormGroup;
+
+  constructor(private svc: MedicamentoService, private catSvc: CategoriaService,
+              private provSvc: ProveedorService, private fb: FormBuilder) {}
+
+  ngOnInit(): void {
+    this.form = this.fb.group({
+      nombre: ['', [Validators.required]],
+      principioActivo: ['', Validators.required],
+      presentacion: [''], concentracion: [''],
+      precioVenta: [null, [Validators.required, Validators.min(0.01)]],
+      precioCompra: [null, Validators.min(0)],
+      stock: [0, [Validators.required, Validators.min(0)]],
+      stockMinimo: [5, Validators.min(0)],
+      fechaVencimiento: [''], requiereReceta: [false],
+      categoriaId: [null, Validators.required],
+      proveedorId: [null, Validators.required]
+    });
+    this.cargar();
+    this.catSvc.listar().subscribe(c => this.categorias.set(c));
+    this.provSvc.listar().subscribe(p => this.proveedores.set(p));
+    this.search$.pipe(debounceTime(350), distinctUntilChanged()).subscribe(q => { this.pagina.set(0); this.cargar(q); });
+  }
+
+  cargar(q?: string): void {
+    this.loading.set(true);
+    const obs = q ? this.svc.buscar(q, this.pagina(), this.tamanio) : this.svc.listar(this.pagina(), this.tamanio);
+    obs.subscribe({
+      next: r => { this.items.set(r.contenido); this.total.set(r.totalElementos); this.totalPag.set(r.totalPaginas); this.loading.set(false); },
+      error: () => { this.error.set('Error al cargar.'); this.loading.set(false); }
+    });
+  }
+
+  onSearch(e: Event): void { const v = (e.target as HTMLInputElement).value; this.searchTerm.set(v); this.search$.next(v); }
+  openCreate(): void { this.editingId.set(null); this.form.reset({ stock: 0, stockMinimo: 5, requiereReceta: false }); this.error.set(''); this.showModal.set(true); }
+  openEdit(m: MedicamentoResponse): void { this.editingId.set(m.id); this.form.patchValue({ ...m }); this.error.set(''); this.showModal.set(true); }
+  closeModal(): void { this.showModal.set(false); }
+
+  save(): void {
+    if (this.form.invalid || this.saving()) return;
+    this.saving.set(true);
+    const obs = this.editingId() ? this.svc.actualizar(this.editingId()!, this.form.value) : this.svc.crear(this.form.value);
+    obs.subscribe({
+      next: () => { this.saving.set(false); this.showModal.set(false); this.success.set('Guardado correctamente.'); this.cargar(this.searchTerm()); setTimeout(() => this.success.set(''), 3000); },
+      error: (e) => { this.saving.set(false); this.error.set(e?.error?.mensaje || 'Error al guardar.'); }
+    });
+  }
+
+  confirmDelete(id: number): void { this.deletingId.set(id); this.showConfirm.set(true); }
+  cancelDelete(): void { this.showConfirm.set(false); }
+  doDelete(): void {
+    this.svc.desactivar(this.deletingId()!).subscribe({
+      next: () => { this.showConfirm.set(false); this.success.set('Desactivado.'); this.cargar(this.searchTerm()); setTimeout(() => this.success.set(''), 3000); },
+      error: () => this.error.set('No se pudo desactivar.')
+    });
+  }
+
+  ir(p: number): void { if (p < 0 || p >= this.totalPag()) return; this.pagina.set(p); this.cargar(this.searchTerm()); }
+  pages(): number[] { return Array.from({ length: Math.min(this.totalPag(), 7) }, (_, i) => i); }
+  stockPct(m: MedicamentoResponse): number { if (!m.stockMinimo) return 100; return Math.min(100, Math.round((m.stock / (m.stockMinimo * 4)) * 100)); }
+  stockClass(m: MedicamentoResponse): string { const p = this.stockPct(m); return p <= 25 ? 'danger' : p <= 50 ? 'warn' : 'ok'; }
+  diasVencer(f: string): number { return Math.ceil((new Date(f).getTime() - Date.now()) / 86400000); }
+  get f() { return this.form.controls; }
+}
+</file>
+
+<file path="src/app/features/proveedores/proveedores.component.css">
+
+</file>
+
+<file path="src/app/features/proveedores/proveedores.component.html">
+<div class="page fade-in">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">🚚 Proveedores</h1>
+      <p class="page-subtitle">Gestión de proveedores farmacéuticos</p>
+    </div>
+    <button class="btn btn-primary" (click)="openCreate()">
+      <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+      Nuevo Proveedor
+    </button>
+  </div>
+
+  @if (success()) { <div class="alert alert-success" style="margin-bottom:16px">✓ {{ success() }}</div> }
+
+  @if (loading()) {
+    <div style="display:flex;justify-content:center;padding:60px"><div class="spinner"></div></div>
+  } @else {
+    <div class="card">
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr><th>Proveedor</th><th>RUC</th><th>Contacto</th><th>Dirección</th><th>Estado</th><th>Acciones</th></tr>
+          </thead>
+          <tbody>
+            @for (p of items(); track p.id) {
+              <tr>
+                <td style="font-weight:600">{{ p.nombre }}</td>
+                <td style="font-family:monospace;font-size:.875rem">{{ p.ruc }}</td>
+                <td>
+                  @if (p.telefono) { <div>📞 {{ p.telefono }}</div> }
+                  @if (p.email) { <div style="font-size:.78rem;color:var(--gray-500)">{{ p.email }}</div> }
+                </td>
+                <td style="font-size:.82rem;color:var(--gray-600);max-width:180px">{{ p.direccion || '—' }}</td>
+                <td>
+                  <button class="badge" style="cursor:pointer;border:none" [class.badge-success]="p.activo" [class.badge-gray]="!p.activo" (click)="toggleEstado(p)">
+                    {{ p.activo ? 'Activo' : 'Inactivo' }}
+                  </button>
+                </td>
+                <td>
+                  <button class="btn btn-ghost btn-icon btn-sm" (click)="openEdit(p)">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="15"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>
+
+@if (showModal()) {
+  <div class="modal-overlay" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingId() ? 'Editar Proveedor' : 'Nuevo Proveedor' }}</h2>
+        <button class="btn btn-ghost btn-icon" (click)="closeModal()">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="18"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        @if (error()) { <div class="alert alert-danger" style="margin-bottom:14px">{{ error() }}</div> }
+        <form [formGroup]="form">
+          <div class="form-grid">
+            <div class="form-group col-span-2">
+              <label class="form-label">Nombre *</label>
+              <input class="form-control" formControlName="nombre" [class.is-invalid]="f['nombre'].invalid && f['nombre'].touched">
+            </div>
+            <div class="form-group">
+              <label class="form-label">RUC *</label>
+              <input class="form-control" formControlName="ruc" [class.is-invalid]="f['ruc'].invalid && f['ruc'].touched" placeholder="20100055948" maxlength="11">
+              @if (f['ruc'].errors?.['pattern'] && f['ruc'].touched) { <span class="form-error">Debe tener 11 dígitos</span> }
+            </div>
+            <div class="form-group">
+              <label class="form-label">Teléfono</label>
+              <input class="form-control" formControlName="telefono">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input class="form-control" type="email" formControlName="email">
+            </div>
+            <div class="form-group col-span-2">
+              <label class="form-label">Dirección</label>
+              <input class="form-control" formControlName="direccion">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" (click)="save()" [disabled]="form.invalid || saving()">
+          @if (saving()) { <div class="spinner spinner-sm"></div> }
+          Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+}
+</file>
+
+<file path="src/app/features/proveedores/proveedores.component.ts">
+import { Component, OnInit, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ProveedorService, ProveedorResponse } from '../../core/services/proveedor.service';
+
+@Component({
+  selector: 'app-proveedores',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
+  templateUrl: './proveedores.component.html',
+  styleUrls: ['./proveedores.component.css']
+})
+export class ProveedoresComponent implements OnInit {
+  items   = signal<ProveedorResponse[]>([]);
+  loading = signal(true); saving = signal(false);
+  showModal = signal(false); editingId = signal<number|null>(null);
+  error = signal(''); success = signal('');
+  form!: FormGroup;
+
+  constructor(private svc: ProveedorService, private fb: FormBuilder) {}
+
+  ngOnInit(): void {
+    this.form = this.fb.group({
+      nombre: ['', Validators.required],
+      ruc: ['', [Validators.required, Validators.pattern(/^\d{11}$/)]],
+      direccion: [''], telefono: [''], email: ['', Validators.email]
+    });
+    this.cargar();
+  }
+
+  cargar(): void {
+    this.loading.set(true);
+    this.svc.listar().subscribe({ next: r => { this.items.set(r); this.loading.set(false); }, error: () => this.loading.set(false) });
+  }
+
+  openCreate(): void { this.editingId.set(null); this.form.reset(); this.error.set(''); this.showModal.set(true); }
+  openEdit(p: ProveedorResponse): void { this.editingId.set(p.id); this.form.patchValue(p); this.error.set(''); this.showModal.set(true); }
+  closeModal(): void { this.showModal.set(false); }
+
+  save(): void {
+    if (this.form.invalid || this.saving()) return;
+    this.saving.set(true);
+    const obs = this.editingId() ? this.svc.actualizar(this.editingId()!, this.form.value) : this.svc.crear(this.form.value);
+    obs.subscribe({
+      next: () => { this.saving.set(false); this.showModal.set(false); this.success.set('Guardado.'); this.cargar(); setTimeout(() => this.success.set(''), 3000); },
+      error: (e) => { this.saving.set(false); this.error.set(e?.error?.mensaje || 'Error.'); }
+    });
+  }
+  toggleEstado(p: ProveedorResponse): void { this.svc.cambiarEstado(p.id, !p.activo).subscribe(() => this.cargar()); }
+  get f() { return this.form.controls; }
+}
+</file>
+
+<file path="src/app/features/usuarios/usuarios.component.css">
+
+</file>
+
+<file path="src/app/features/usuarios/usuarios.component.html">
+<div class="page fade-in">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">🛡️ Usuarios</h1>
+      <p class="page-subtitle">Gestión de accesos al sistema</p>
+    </div>
+    <button class="btn btn-primary" (click)="openCreate()">
+      <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+      Nuevo Usuario
+    </button>
+  </div>
+
+  @if (success()) { <div class="alert alert-success" style="margin-bottom:16px">✓ {{ success() }}</div> }
+
+  @if (loading()) {
+    <div style="display:flex;justify-content:center;padding:60px"><div class="spinner"></div></div>
+  } @else {
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px">
+      @for (u of items(); track u.id) {
+        <div class="card card-body" style="padding:20px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+            <div style="width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:800;font-size:1rem;flex-shrink:0"
+                 [style.background]="u.rol === 'ADMIN' ? 'var(--accent-light)' : 'var(--gray-100)'"
+                 [style.color]="u.rol === 'ADMIN' ? 'var(--accent)' : 'var(--gray-600)'">
+              {{ u.nombreCompleto.charAt(0) }}
+            </div>
+            <div>
+              <div style="font-weight:700;font-size:.95rem">{{ u.nombreCompleto }}</div>
+              <div style="font-size:.78rem;color:var(--gray-500)">&#64;{{ u.username }}</div>
+            </div>
+            <div style="margin-left:auto">
+              <span class="badge" [class.badge-success]="u.rol === 'ADMIN'" [class.badge-info]="u.rol !== 'ADMIN'">{{ u.rol }}</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <button class="badge" style="cursor:pointer;border:none" [class.badge-success]="u.activo" [class.badge-gray]="!u.activo" (click)="toggleEstado(u)">
+              {{ u.activo ? '● Activo' : '○ Inactivo' }}
+            </button>
+            <button class="btn btn-ghost btn-icon btn-sm" (click)="openEdit(u)">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="15"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+@if (showModal()) {
+  <div class="modal-overlay" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingId() ? 'Editar Usuario' : 'Nuevo Usuario' }}</h2>
+        <button class="btn btn-ghost btn-icon" (click)="closeModal()">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="18"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        @if (error()) { <div class="alert alert-danger" style="margin-bottom:14px">{{ error() }}</div> }
+        <form [formGroup]="form">
+          <div class="form-grid">
+            <div class="form-group col-span-2">
+              <label class="form-label">Nombre Completo *</label>
+              <input class="form-control" formControlName="nombreCompleto" [class.is-invalid]="f['nombreCompleto'].invalid && f['nombreCompleto'].touched">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Username *</label>
+              <input class="form-control" formControlName="username" [class.is-invalid]="f['username'].invalid && f['username'].touched" [attr.disabled]="editingId() ? true : null">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Rol *</label>
+              <select class="form-control filter-select" formControlName="rol" style="padding:10px 14px">
+                <option value="ADMIN">ADMIN</option>
+                <option value="EMPLEADO">EMPLEADO</option>
+              </select>
+            </div>
+            <div class="form-group col-span-2">
+              <label class="form-label">{{ editingId() ? 'Nueva Contraseña (dejar vacío para no cambiar)' : 'Contraseña *' }}</label>
+              <div style="position:relative">
+                <input class="form-control" [type]="showPass() ? 'text' : 'password'" formControlName="password" [class.is-invalid]="f['password'].invalid && f['password'].touched" style="padding-right:40px">
+                <button type="button" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--gray-500);cursor:pointer" (click)="showPass.set(!showPass())">
+                  <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>
+                </button>
+              </div>
+              @if (f['password'].errors?.['minlength'] && f['password'].touched) { <span class="form-error">Mínimo 6 caracteres</span> }
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" (click)="save()" [disabled]="form.invalid || saving()">
+          @if (saving()) { <div class="spinner spinner-sm"></div> }
+          Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+}
+</file>
+
+<file path="src/app/features/usuarios/usuarios.component.ts">
+import { Component, OnInit, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { UsuarioService, UsuarioResponse } from '../../core/services/usuario.service';
+
+@Component({
+  selector: 'app-usuarios',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
+  templateUrl: './usuarios.component.html',
+  styleUrls: ['./usuarios.component.css']
+})
+export class UsuariosComponent implements OnInit {
+  items   = signal<UsuarioResponse[]>([]);
+  loading = signal(true); saving = signal(false);
+  showModal = signal(false); editingId = signal<number|null>(null);
+  showPass = signal(false);
+  error = signal(''); success = signal('');
+  form!: FormGroup;
+
+  constructor(private svc: UsuarioService, private fb: FormBuilder) {}
+
+  ngOnInit(): void {
+    this.form = this.fb.group({
+      username: ['', [Validators.required, Validators.minLength(3)]],
+      password: [''],
+      nombreCompleto: ['', Validators.required],
+      rol: ['EMPLEADO', Validators.required]
+    });
+    this.cargar();
+  }
+
+  cargar(): void {
+    this.loading.set(true);
+    this.svc.listar().subscribe({ next: r => { this.items.set(r); this.loading.set(false); }, error: () => this.loading.set(false) });
+  }
+
+  openCreate(): void {
+    this.editingId.set(null);
+    this.form.reset({ rol: 'EMPLEADO' });
+    this.form.get('password')?.setValidators([Validators.required, Validators.minLength(6)]);
+    this.form.get('password')?.updateValueAndValidity();
+    this.error.set(''); this.showModal.set(true);
+  }
+
+  openEdit(u: UsuarioResponse): void {
+    this.editingId.set(u.id);
+    this.form.patchValue(u);
+    this.form.get('password')?.clearValidators();
+    this.form.get('password')?.setValue('');
+    this.form.get('password')?.updateValueAndValidity();
+    this.error.set(''); this.showModal.set(true);
+  }
+
+  closeModal(): void { this.showModal.set(false); }
+
+  save(): void {
+    if (this.form.invalid || this.saving()) return;
+    this.saving.set(true);
+    const val = {...this.form.value};
+    if (!val.password) delete val.password;
+    const obs = this.editingId() ? this.svc.actualizar(this.editingId()!, val) : this.svc.crear(val);
+    obs.subscribe({
+      next: () => { this.saving.set(false); this.showModal.set(false); this.success.set('Guardado.'); this.cargar(); setTimeout(() => this.success.set(''), 3000); },
+      error: (e) => { this.saving.set(false); this.error.set(e?.error?.mensaje || 'Error.'); }
+    });
+  }
+
+  toggleEstado(u: UsuarioResponse): void { this.svc.cambiarEstado(u.id, !u.activo).subscribe(() => this.cargar()); }
+  get f() { return this.form.controls; }
+}
+</file>
+
+<file path="src/app/features/ventas/ventas.component.css">
+
+</file>
+
+<file path="src/app/features/ventas/ventas.component.html">
+<div class="page fade-in">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">🛒 Ventas</h1>
+      <p class="page-subtitle">Registro y seguimiento de ventas</p>
+    </div>
+    <button class="btn btn-primary" (click)="openCreate()">
+      <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+      Nueva Venta
+    </button>
+  </div>
+
+  <!-- Stats rápidas -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px">
+    <div class="card card-body fade-in-2" style="padding:18px">
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-500);margin-bottom:4px">Ventas hoy</div>
+      <div style="font-family:'Sora',sans-serif;font-size:1.8rem;font-weight:800;color:var(--gray-900)">{{ ventasHoy() }}</div>
+    </div>
+    <div class="card card-body fade-in-3" style="padding:18px">
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-500);margin-bottom:4px">Total hoy</div>
+      <div style="font-family:'Sora',sans-serif;font-size:1.8rem;font-weight:800;color:var(--accent)">S/. {{ totalHoy() | number:'1.2-2' }}</div>
+    </div>
+    <div class="card card-body fade-in-4" style="padding:18px">
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-500);margin-bottom:4px">Total ventas</div>
+      <div style="font-family:'Sora',sans-serif;font-size:1.8rem;font-weight:800;color:var(--gray-900)">{{ items().length }}</div>
+    </div>
+  </div>
+
+  @if (success()) { <div class="alert alert-success fade-in" style="margin-bottom:16px">✓ {{ success() }}</div> }
+
+  <div class="card fade-in-2">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="search-bar">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
+          <input class="search-input" type="text" placeholder="Buscar por cliente o N°..." (input)="onSearch($event)">
+        </div>
+        <select class="filter-select" (change)="onFilterEstado($event)">
+          <option value="">Todos los estados</option>
+          <option value="COMPLETADA">Completadas</option>
+          <option value="ANULADA">Anuladas</option>
+        </select>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div style="display:flex;justify-content:center;padding:60px"><div class="spinner"></div></div>
+    } @else {
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>N° Venta</th>
+              <th>Fecha</th>
+              <th>Cliente</th>
+              <th>Productos</th>
+              <th>Total</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (v of filtered(); track v.id) {
+              <tr>
+                <td><span style="font-family:monospace;font-weight:700;color:var(--accent)">#{{ v.id.toString().padStart(4,'0') }}</span></td>
+                <td style="font-size:.82rem">{{ v.fechaVenta | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td>
+                  @if (v.clienteNombre) {
+                    <div style="font-weight:600">{{ v.clienteNombre }}</div>
+                    <div style="font-size:.75rem;color:var(--gray-500)">DNI: {{ v.clienteDni }}</div>
+                  } @else {
+                    <span class="badge badge-gray">Cliente ocasional</span>
+                  }
+                </td>
+                <td><span class="badge badge-info">{{ v.detalles ? v.detalles.length : 0 }} ítem(s)</span></td>
+                <td style="font-family:'Sora',sans-serif;font-weight:700;font-size:1rem;color:var(--gray-900)">
+                  S/. {{ v.totalVenta | number:'1.2-2' }}
+                </td>
+                <td>
+                  <span class="badge" [class.badge-success]="v.estado==='COMPLETADA'" [class.badge-danger]="v.estado==='ANULADA'">
+                    {{ v.estado }}
+                  </span>
+                </td>
+                <td>
+                  <div style="display:flex;gap:6px">
+                    <button class="btn btn-ghost btn-icon btn-sm" title="Ver detalle" (click)="verDetalle(v)">
+                      <svg viewBox="0 0 20 20" fill="currentColor" width="15"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>
+                    </button>
+                    @if (v.estado === 'COMPLETADA') {
+                      <button class="btn btn-ghost btn-icon btn-sm" title="Anular" (click)="anular(v.id)" style="color:var(--danger)">
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="15"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Modal Nueva Venta -->
+@if (showModal()) {
+  <div class="modal-overlay" (click)="closeModal()">
+    <div class="modal modal-xl" (click)="$event.stopPropagation()" style="max-height:92vh">
+      <div class="modal-header">
+        <h2>🛒 Nueva Venta</h2>
+        <button class="btn btn-ghost btn-icon" (click)="closeModal()">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="18"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        @if (error()) { <div class="alert alert-danger" style="margin-bottom:14px">{{ error() }}</div> }
+        <form [formGroup]="form">
+          <div class="form-grid" style="margin-bottom:20px">
+            <div class="form-group">
+              <label class="form-label">Cliente (opcional)</label>
+              <select class="form-control filter-select" formControlName="clienteId" style="padding:10px 14px">
+                <option [value]="null">Cliente ocasional (sin registro)</option>
+                @for (c of clientes(); track c.id) {
+                  <option [value]="c.id">{{ c.nombre }} — {{ c.dni }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Observación</label>
+              <input class="form-control" formControlName="observacion" placeholder="Notas opcionales...">
+            </div>
+          </div>
+
+          <div style="margin-bottom:12px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <h4 style="font-size:.9rem;font-weight:700">Productos</h4>
+              <button type="button" class="btn btn-secondary btn-sm" (click)="agregarDetalle()">+ Agregar producto</button>
+            </div>
+
+            @for (ctrl of detallesArray.controls; track ctrl; let i = $index) {
+              <div [formGroup]="$any(ctrl)" style="display:grid;grid-template-columns:1fr 100px auto;gap:10px;align-items:end;margin-bottom:10px;padding:12px;background:var(--gray-50);border-radius:var(--radius)">
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">Medicamento *</label>
+                  <select class="form-control filter-select" formControlName="medicamentoId" style="padding:9px 14px">
+                    <option value="">Seleccionar...</option>
+                    @for (m of medicamentos(); track m.id) {
+                      <option [value]="m.id">{{ m.nombre }} · S/. {{ m.precioVenta.toFixed(2) }} (stock: {{ m.stock }})</option>
+                    }
+                  </select>
+                </div>
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">Cantidad</label>
+                  <input class="form-control" type="number" min="1" formControlName="cantidad">
+                </div>
+                <button type="button" class="btn btn-ghost btn-icon" (click)="quitarDetalle(i)" style="color:var(--danger);margin-bottom:0">
+                  <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                </button>
+              </div>
+            }
+          </div>
+
+          <div style="background:var(--accent-muted);border:1.5px solid var(--accent-light);border-radius:var(--radius);padding:14px 18px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-weight:600;color:var(--accent-dark)">Total estimado:</span>
+            <span style="font-family:'Sora',sans-serif;font-size:1.4rem;font-weight:800;color:var(--accent)">
+              S/. {{ totalCalculado() | number:'1.2-2' }}
+            </span>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" (click)="save()" [disabled]="form.invalid || saving()">
+          @if (saving()) { <div class="spinner spinner-sm"></div> }
+          Registrar Venta
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal Detalle Venta -->
+@if (showDetalle() && ventaDetalle()) {
+  <div class="modal-overlay" (click)="showDetalle.set(false)">
+    <div class="modal modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Venta #{{ ventaDetalle()!.id.toString().padStart(4,'0') }}</h2>
+        <button class="btn btn-ghost btn-icon" (click)="showDetalle.set(false)">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="18"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+          <div>
+            <div class="form-label">Cliente</div>
+            <div style="font-weight:600">{{ ventaDetalle()!.clienteNombre || 'Cliente ocasional' }}</div>
+          </div>
+          <div>
+            <div class="form-label">Fecha</div>
+            <div>{{ ventaDetalle()!.fechaVenta | date:'dd/MM/yyyy HH:mm' }}</div>
+          </div>
+          <div>
+            <div class="form-label">Atendido por</div>
+            <div>{{ ventaDetalle()!.usuarioNombre }}</div>
+          </div>
+          <div>
+            <div class="form-label">Estado</div>
+            <span class="badge" [class.badge-success]="ventaDetalle()!.estado==='COMPLETADA'" [class.badge-danger]="ventaDetalle()!.estado==='ANULADA'">{{ ventaDetalle()!.estado }}</span>
+          </div>
+        </div>
+        <table class="table" style="margin-bottom:16px">
+          <thead><tr><th>Medicamento</th><th>Cant.</th><th>Precio Unit.</th><th>Subtotal</th></tr></thead>
+          <tbody>
+            @for (d of ventaDetalle()!.detalles; track d.id) {
+              <tr>
+                <td>{{ d.medicamentoNombre }}</td>
+                <td>{{ d.cantidad }}</td>
+                <td>S/. {{ d.precioUnitario | number:'1.2-2' }}</td>
+                <td style="font-weight:600">S/. {{ d.subtotal | number:'1.2-2' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        <div style="text-align:right;font-family:'Sora',sans-serif;font-size:1.3rem;font-weight:800;color:var(--accent)">
+          Total: S/. {{ ventaDetalle()!.totalVenta | number:'1.2-2' }}
+        </div>
+        @if (ventaDetalle()!.observacion) {
+          <div style="margin-top:12px;padding:10px;background:var(--gray-50);border-radius:var(--radius);font-size:.875rem;color:var(--gray-600)">
+            📝 {{ ventaDetalle()!.observacion }}
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}
+</file>
+
+<file path="src/app/features/ventas/ventas.component.ts">
+import { Component, OnInit, signal, computed } from '@angular/core';
+import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
+import { VentaService, VentaResponse, VentaRequest } from '../../core/services/venta.service';
+import { MedicamentoService, MedicamentoResponse } from '../../core/services/medicamento.service';
+import { ClienteService, ClienteResponse } from '../../core/services/cliente.service';
+
+@Component({
+  selector: 'app-ventas',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, CurrencyPipe, DatePipe],
+  templateUrl: './ventas.component.html',
+  styleUrls: ['./ventas.component.css']
+})
+export class VentasComponent implements OnInit {
+  items    = signal<VentaResponse[]>([]);
+  filtered = signal<VentaResponse[]>([]);
+  medicamentos = signal<MedicamentoResponse[]>([]);
+  clientes = signal<ClienteResponse[]>([]);
+  loading  = signal(true); saving = signal(false);
+  showModal = signal(false); showDetalle = signal(false);
+  ventaDetalle = signal<VentaResponse|null>(null);
+  error = signal(''); success = signal('');
+  searchQ = signal(''); filterEstado = signal('');
+  form!: FormGroup;
+
+  constructor(private svc: VentaService, private medSvc: MedicamentoService,
+              private cliSvc: ClienteService, private fb: FormBuilder) {}
+
+  ngOnInit(): void {
+    this.form = this.fb.group({
+      clienteId: [null],
+      observacion: [''],
+      detalles: this.fb.array([])
+    });
+    this.cargar();
+    this.medSvc.listar(0, 100).subscribe(r => this.medicamentos.set(r.contenido.filter(m => m.activo && m.stock > 0)));
+    this.cliSvc.listar().subscribe(r => this.clientes.set(r.filter(c => c.activo)));
+  }
+
+  get detallesArray(): FormArray { return this.form.get('detalles') as FormArray; }
+
+  cargar(): void {
+    this.loading.set(true);
+    this.svc.listar().subscribe({
+      next: r => { this.items.set(r); this.filter(); this.loading.set(false); },
+      error: () => { this.error.set('Error al cargar.'); this.loading.set(false); }
+    });
+  }
+
+  filter(): void {
+    let r = this.items();
+    if (this.searchQ()) r = r.filter(v => (v.clienteNombre||'').toLowerCase().includes(this.searchQ().toLowerCase()) || v.id.toString().includes(this.searchQ()));
+    if (this.filterEstado()) r = r.filter(v => v.estado === this.filterEstado());
+    this.filtered.set(r);
+  }
+
+  onSearch(e: Event): void { this.searchQ.set((e.target as HTMLInputElement).value); this.filter(); }
+  onFilterEstado(e: Event): void { this.filterEstado.set((e.target as HTMLSelectElement).value); this.filter(); }
+
+  openCreate(): void {
+    this.detallesArray.clear();
+    this.form.reset();
+    this.agregarDetalle();
+    this.error.set('');
+    this.showModal.set(true);
+  }
+  closeModal(): void { this.showModal.set(false); }
+
+  agregarDetalle(): void {
+    this.detallesArray.push(this.fb.group({
+      medicamentoId: [null, Validators.required],
+      cantidad: [1, [Validators.required, Validators.min(1)]]
+    }));
+  }
+  quitarDetalle(i: number): void { if (this.detallesArray.length > 1) this.detallesArray.removeAt(i); }
+
+  totalCalculado(): number {
+    return this.detallesArray.controls.reduce((sum, ctrl) => {
+      const medId = ctrl.value.medicamentoId;
+      const med = this.medicamentos().find(m => m.id == medId);
+      return sum + (med ? med.precioVenta * (ctrl.value.cantidad || 0) : 0);
+    }, 0);
+  }
+
+  getMedNombre(id: any): string {
+    const m = this.medicamentos().find(x => x.id == id);
+    return m ? `${m.nombre} (S/. ${m.precioVenta.toFixed(2)})` : '';
+  }
+
+  save(): void {
+    if (this.form.invalid || this.saving()) return;
+    this.saving.set(true);
+    const req: VentaRequest = {
+      clienteId: this.form.value.clienteId || undefined,
+      observacion: this.form.value.observacion,
+      detalles: this.detallesArray.value
+    };
+    this.svc.registrar(req).subscribe({
+      next: () => { this.saving.set(false); this.showModal.set(false); this.success.set('Venta registrada.'); this.cargar(); setTimeout(() => this.success.set(''), 3000); },
+      error: (e) => { this.saving.set(false); this.error.set(e?.error?.mensaje || 'Error al registrar.'); }
+    });
+  }
+
+  verDetalle(v: VentaResponse): void { this.ventaDetalle.set(v); this.showDetalle.set(true); }
+
+  anular(id: number): void {
+    if (!confirm('¿Anular esta venta?')) return;
+    this.svc.anular(id).subscribe({ next: () => { this.success.set('Venta anulada.'); this.cargar(); setTimeout(() => this.success.set(''), 3000); } });
+  }
+
+  ventasHoy(): number { const h = new Date().toDateString(); return this.items().filter(v => new Date(v.fechaVenta).toDateString() === h && v.estado === 'COMPLETADA').length; }
+  totalHoy(): number { const h = new Date().toDateString(); return this.items().filter(v => new Date(v.fechaVenta).toDateString() === h && v.estado === 'COMPLETADA').reduce((s,v) => s + v.totalVenta, 0); }
+}
+</file>
+
+<file path="src/app/app.component.ts">
+import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  imports: [RouterOutlet],
+  template: '<router-outlet />'
+})
+export class AppComponent {}
+</file>
+
+<file path="src/app/app.config.ts">
+import { ApplicationConfig, LOCALE_ID } from '@angular/core';
+import { provideRouter } from '@angular/router';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideAnimations } from '@angular/platform-browser/animations';
+import { registerLocaleData } from '@angular/common';
+import localeEs from '@angular/common/locales/es';
+import { routes } from './app.routes';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
+
+registerLocaleData(localeEs);
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideRouter(routes),
+    provideHttpClient(withInterceptors([authInterceptor])),
+    provideAnimations(),
+    { provide: LOCALE_ID, useValue: 'es' }
+  ]
+};
+</file>
+
+<file path="src/app/app.css">
+
+</file>
+
+<file path="src/app/app.html">
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
+<!-- * * * * * * * * * * * The content below * * * * * * * * * * * -->
+<!-- * * * * * * * * * * is only a placeholder * * * * * * * * * * -->
+<!-- * * * * * * * * * * and can be replaced.  * * * * * * * * * * -->
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
+<!-- * * * * * * * * * Delete the template below * * * * * * * * * -->
+<!-- * * * * * * * to get started with your project! * * * * * * * -->
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
+
+<style>
+  :host {
+    --bright-blue: oklch(51.01% 0.274 263.83);
+    --electric-violet: oklch(53.18% 0.28 296.97);
+    --french-violet: oklch(47.66% 0.246 305.88);
+    --vivid-pink: oklch(69.02% 0.277 332.77);
+    --hot-red: oklch(61.42% 0.238 15.34);
+    --orange-red: oklch(63.32% 0.24 31.68);
+
+    --gray-900: oklch(19.37% 0.006 300.98);
+    --gray-700: oklch(36.98% 0.014 302.71);
+    --gray-400: oklch(70.9% 0.015 304.04);
+
+    --red-to-pink-to-purple-vertical-gradient: linear-gradient(
+      180deg,
+      var(--orange-red) 0%,
+      var(--vivid-pink) 50%,
+      var(--electric-violet) 100%
+    );
+
+    --red-to-pink-to-purple-horizontal-gradient: linear-gradient(
+      90deg,
+      var(--orange-red) 0%,
+      var(--vivid-pink) 50%,
+      var(--electric-violet) 100%
+    );
+
+    --pill-accent: var(--bright-blue);
+
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+      "Segoe UI Symbol";
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    display: block;
+    height: 100dvh;
+  }
+
+  h1 {
+    font-size: 3.125rem;
+    color: var(--gray-900);
+    font-weight: 500;
+    line-height: 100%;
+    letter-spacing: -0.125rem;
+    margin: 0;
+    font-family: "Inter Tight", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+      "Segoe UI Symbol";
+  }
+
+  p {
+    margin: 0;
+    color: var(--gray-700);
+  }
+
+  main {
+    width: 100%;
+    min-height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    box-sizing: inherit;
+    position: relative;
+  }
+
+  .angular-logo {
+    max-width: 9.2rem;
+  }
+
+  .content {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    max-width: 700px;
+    margin-bottom: 3rem;
+  }
+
+  .content h1 {
+    margin-top: 1.75rem;
+  }
+
+  .content p {
+    margin-top: 1.5rem;
+  }
+
+  .divider {
+    width: 1px;
+    background: var(--red-to-pink-to-purple-vertical-gradient);
+    margin-inline: 0.5rem;
+  }
+
+  .pill-group {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+  }
+
+  .pill {
+    display: flex;
+    align-items: center;
+    --pill-accent: var(--bright-blue);
+    background: color-mix(in srgb, var(--pill-accent) 5%, transparent);
+    color: var(--pill-accent);
+    padding-inline: 0.75rem;
+    padding-block: 0.375rem;
+    border-radius: 2.75rem;
+    border: 0;
+    transition: background 0.3s ease;
+    font-family: var(--inter-font);
+    font-size: 0.875rem;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 1.4rem;
+    letter-spacing: -0.00875rem;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .pill:hover {
+    background: color-mix(in srgb, var(--pill-accent) 15%, transparent);
+  }
+
+  .pill-group .pill:nth-child(6n + 1) {
+    --pill-accent: var(--bright-blue);
+  }
+  .pill-group .pill:nth-child(6n + 2) {
+    --pill-accent: var(--electric-violet);
+  }
+  .pill-group .pill:nth-child(6n + 3) {
+    --pill-accent: var(--french-violet);
+  }
+
+  .pill-group .pill:nth-child(6n + 4),
+  .pill-group .pill:nth-child(6n + 5),
+  .pill-group .pill:nth-child(6n + 6) {
+    --pill-accent: var(--hot-red);
+  }
+
+  .pill-group svg {
+    margin-inline-start: 0.25rem;
+  }
+
+  .social-links {
+    display: flex;
+    align-items: center;
+    gap: 0.73rem;
+    margin-top: 1.5rem;
+  }
+
+  .social-links path {
+    transition: fill 0.3s ease;
+    fill: var(--gray-400);
+  }
+
+  .social-links a:hover svg path {
+    fill: var(--gray-900);
+  }
+
+  @media screen and (max-width: 650px) {
+    .content {
+      flex-direction: column;
+      width: max-content;
+    }
+
+    .divider {
+      height: 1px;
+      width: 100%;
+      background: var(--red-to-pink-to-purple-horizontal-gradient);
+      margin-block: 1.5rem;
+    }
+  }
+</style>
+
+<main class="main">
+  <div class="content">
+    <div class="left-side">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 982 239"
+        fill="none"
+        class="angular-logo"
+      >
+        <g clip-path="url(#a)">
+          <path
+            fill="url(#b)"
+            d="M388.676 191.625h30.849L363.31 31.828h-35.758l-56.215 159.797h30.848l13.174-39.356h60.061l13.256 39.356Zm-65.461-62.675 21.602-64.311h1.227l21.602 64.311h-44.431Zm126.831-7.527v70.202h-28.23V71.839h27.002v20.374h1.392c2.782-6.71 7.2-12.028 13.255-15.956 6.056-3.927 13.584-5.89 22.503-5.89 8.264 0 15.465 1.8 21.684 5.318 6.137 3.518 10.964 8.673 14.319 15.382 3.437 6.71 5.074 14.81 4.992 24.383v76.175h-28.23v-71.92c0-8.019-2.046-14.237-6.219-18.819-4.173-4.5-9.819-6.791-17.102-6.791-4.91 0-9.328 1.063-13.174 3.272-3.846 2.128-6.792 5.237-9.001 9.328-2.046 4.009-3.191 8.918-3.191 14.728ZM589.233 239c-10.147 0-18.82-1.391-26.103-4.091-7.282-2.7-13.092-6.382-17.511-10.964-4.418-4.582-7.528-9.655-9.164-15.219l25.448-6.136c1.145 2.372 2.782 4.663 4.991 6.954 2.209 2.291 5.155 4.255 8.837 5.81 3.683 1.554 8.428 2.291 14.074 2.291 8.019 0 14.647-1.964 19.884-5.81 5.237-3.845 7.856-10.227 7.856-19.064v-22.665h-1.391c-1.473 2.946-3.601 5.892-6.383 9.001-2.782 3.109-6.464 5.645-10.965 7.691-4.582 2.046-10.228 3.109-17.101 3.109-9.165 0-17.511-2.209-25.039-6.545-7.446-4.337-13.42-10.883-17.757-19.474-4.418-8.673-6.628-19.473-6.628-32.565 0-13.091 2.21-24.301 6.628-33.383 4.419-9.082 10.311-15.955 17.839-20.7 7.528-4.746 15.874-7.037 25.039-7.037 7.037 0 12.846 1.145 17.347 3.518 4.582 2.373 8.182 5.236 10.883 8.51 2.7 3.272 4.746 6.382 6.137 9.327h1.554v-19.8h27.821v121.749c0 10.228-2.454 18.737-7.364 25.447-4.91 6.709-11.538 11.7-20.048 15.055-8.509 3.355-18.165 4.991-28.884 4.991Zm.245-71.266c5.974 0 11.047-1.473 15.302-4.337 4.173-2.945 7.446-7.118 9.573-12.519 2.21-5.482 3.274-12.027 3.274-19.637 0-7.609-1.064-14.155-3.274-19.8-2.127-5.646-5.318-10.064-9.491-13.255-4.174-3.11-9.329-4.746-15.384-4.746s-11.537 1.636-15.792 4.91c-4.173 3.272-7.365 7.772-9.492 13.418-2.128 5.727-3.191 12.191-3.191 19.392 0 7.2 1.063 13.745 3.273 19.228 2.127 5.482 5.318 9.736 9.573 12.764 4.174 3.027 9.41 4.582 15.629 4.582Zm141.56-26.51V71.839h28.23v119.786h-27.412v-21.273h-1.227c-2.7 6.709-7.119 12.191-13.338 16.446-6.137 4.255-13.747 6.382-22.748 6.382-7.855 0-14.81-1.718-20.783-5.237-5.974-3.518-10.72-8.591-14.075-15.382-3.355-6.709-5.073-14.891-5.073-24.464V71.839h28.312v71.921c0 7.609 2.046 13.664 6.219 18.083 4.173 4.5 9.655 6.709 16.365 6.709 4.173 0 8.183-.982 12.111-3.028 3.927-2.045 7.118-5.072 9.655-9.082 2.537-4.091 3.764-9.164 3.764-15.218Zm65.707-109.395v159.796h-28.23V31.828h28.23Zm44.841 162.169c-7.61 0-14.402-1.391-20.457-4.091-6.055-2.7-10.883-6.791-14.32-12.109-3.518-5.319-5.237-11.946-5.237-19.801 0-6.791 1.228-12.355 3.765-16.773 2.536-4.419 5.891-7.937 10.228-10.637 4.337-2.618 9.164-4.664 14.647-6.055 5.4-1.391 11.046-2.373 16.856-3.027 7.037-.737 12.683-1.391 17.102-1.964 4.337-.573 7.528-1.555 9.574-2.782 1.963-1.309 3.027-3.273 3.027-5.973v-.491c0-5.891-1.718-10.391-5.237-13.664-3.518-3.191-8.51-4.828-15.056-4.828-6.955 0-12.356 1.473-16.447 4.5-4.009 3.028-6.71 6.546-8.183 10.719l-26.348-3.764c2.046-7.282 5.483-13.336 10.31-18.328 4.746-4.909 10.638-8.59 17.511-11.045 6.955-2.455 14.565-3.682 22.912-3.682 5.809 0 11.537.654 17.265 2.045s10.965 3.6 15.711 6.71c4.746 3.109 8.51 7.282 11.455 12.6 2.864 5.318 4.337 11.946 4.337 19.883v80.184h-27.166v-16.446h-.9c-1.719 3.355-4.092 6.464-7.201 9.328-3.109 2.864-6.955 5.237-11.619 6.955-4.828 1.718-10.229 2.536-16.529 2.536Zm7.364-20.701c5.646 0 10.556-1.145 14.729-3.354 4.173-2.291 7.364-5.237 9.655-9.001 2.292-3.763 3.355-7.854 3.355-12.273v-14.155c-.9.737-2.373 1.391-4.5 2.046-2.128.654-4.419 1.145-7.037 1.636-2.619.491-5.155.9-7.692 1.227-2.537.328-4.746.655-6.628.901-4.173.572-8.019 1.472-11.292 2.781-3.355 1.31-5.973 3.11-7.855 5.401-1.964 2.291-2.864 5.318-2.864 8.918 0 5.237 1.882 9.164 5.728 11.782 3.682 2.782 8.51 4.091 14.401 4.091Zm64.643 18.328V71.839h27.412v19.965h1.227c2.21-6.955 5.974-12.274 11.292-16.038 5.319-3.763 11.456-5.645 18.329-5.645 1.555 0 3.355.082 5.237.163 1.964.164 3.601.328 4.91.573v25.938c-1.227-.41-3.109-.819-5.646-1.146a58.814 58.814 0 0 0-7.446-.49c-5.155 0-9.738 1.145-13.829 3.354-4.091 2.209-7.282 5.236-9.655 9.164-2.373 3.927-3.519 8.427-3.519 13.5v70.448h-28.312ZM222.077 39.192l-8.019 125.923L137.387 0l84.69 39.192Zm-53.105 162.825-57.933 33.056-57.934-33.056 11.783-28.556h92.301l11.783 28.556ZM111.039 62.675l30.357 73.803H80.681l30.358-73.803ZM7.937 165.115 0 39.192 84.69 0 7.937 165.115Z"
+          />
+          <path
+            fill="url(#c)"
+            d="M388.676 191.625h30.849L363.31 31.828h-35.758l-56.215 159.797h30.848l13.174-39.356h60.061l13.256 39.356Zm-65.461-62.675 21.602-64.311h1.227l21.602 64.311h-44.431Zm126.831-7.527v70.202h-28.23V71.839h27.002v20.374h1.392c2.782-6.71 7.2-12.028 13.255-15.956 6.056-3.927 13.584-5.89 22.503-5.89 8.264 0 15.465 1.8 21.684 5.318 6.137 3.518 10.964 8.673 14.319 15.382 3.437 6.71 5.074 14.81 4.992 24.383v76.175h-28.23v-71.92c0-8.019-2.046-14.237-6.219-18.819-4.173-4.5-9.819-6.791-17.102-6.791-4.91 0-9.328 1.063-13.174 3.272-3.846 2.128-6.792 5.237-9.001 9.328-2.046 4.009-3.191 8.918-3.191 14.728ZM589.233 239c-10.147 0-18.82-1.391-26.103-4.091-7.282-2.7-13.092-6.382-17.511-10.964-4.418-4.582-7.528-9.655-9.164-15.219l25.448-6.136c1.145 2.372 2.782 4.663 4.991 6.954 2.209 2.291 5.155 4.255 8.837 5.81 3.683 1.554 8.428 2.291 14.074 2.291 8.019 0 14.647-1.964 19.884-5.81 5.237-3.845 7.856-10.227 7.856-19.064v-22.665h-1.391c-1.473 2.946-3.601 5.892-6.383 9.001-2.782 3.109-6.464 5.645-10.965 7.691-4.582 2.046-10.228 3.109-17.101 3.109-9.165 0-17.511-2.209-25.039-6.545-7.446-4.337-13.42-10.883-17.757-19.474-4.418-8.673-6.628-19.473-6.628-32.565 0-13.091 2.21-24.301 6.628-33.383 4.419-9.082 10.311-15.955 17.839-20.7 7.528-4.746 15.874-7.037 25.039-7.037 7.037 0 12.846 1.145 17.347 3.518 4.582 2.373 8.182 5.236 10.883 8.51 2.7 3.272 4.746 6.382 6.137 9.327h1.554v-19.8h27.821v121.749c0 10.228-2.454 18.737-7.364 25.447-4.91 6.709-11.538 11.7-20.048 15.055-8.509 3.355-18.165 4.991-28.884 4.991Zm.245-71.266c5.974 0 11.047-1.473 15.302-4.337 4.173-2.945 7.446-7.118 9.573-12.519 2.21-5.482 3.274-12.027 3.274-19.637 0-7.609-1.064-14.155-3.274-19.8-2.127-5.646-5.318-10.064-9.491-13.255-4.174-3.11-9.329-4.746-15.384-4.746s-11.537 1.636-15.792 4.91c-4.173 3.272-7.365 7.772-9.492 13.418-2.128 5.727-3.191 12.191-3.191 19.392 0 7.2 1.063 13.745 3.273 19.228 2.127 5.482 5.318 9.736 9.573 12.764 4.174 3.027 9.41 4.582 15.629 4.582Zm141.56-26.51V71.839h28.23v119.786h-27.412v-21.273h-1.227c-2.7 6.709-7.119 12.191-13.338 16.446-6.137 4.255-13.747 6.382-22.748 6.382-7.855 0-14.81-1.718-20.783-5.237-5.974-3.518-10.72-8.591-14.075-15.382-3.355-6.709-5.073-14.891-5.073-24.464V71.839h28.312v71.921c0 7.609 2.046 13.664 6.219 18.083 4.173 4.5 9.655 6.709 16.365 6.709 4.173 0 8.183-.982 12.111-3.028 3.927-2.045 7.118-5.072 9.655-9.082 2.537-4.091 3.764-9.164 3.764-15.218Zm65.707-109.395v159.796h-28.23V31.828h28.23Zm44.841 162.169c-7.61 0-14.402-1.391-20.457-4.091-6.055-2.7-10.883-6.791-14.32-12.109-3.518-5.319-5.237-11.946-5.237-19.801 0-6.791 1.228-12.355 3.765-16.773 2.536-4.419 5.891-7.937 10.228-10.637 4.337-2.618 9.164-4.664 14.647-6.055 5.4-1.391 11.046-2.373 16.856-3.027 7.037-.737 12.683-1.391 17.102-1.964 4.337-.573 7.528-1.555 9.574-2.782 1.963-1.309 3.027-3.273 3.027-5.973v-.491c0-5.891-1.718-10.391-5.237-13.664-3.518-3.191-8.51-4.828-15.056-4.828-6.955 0-12.356 1.473-16.447 4.5-4.009 3.028-6.71 6.546-8.183 10.719l-26.348-3.764c2.046-7.282 5.483-13.336 10.31-18.328 4.746-4.909 10.638-8.59 17.511-11.045 6.955-2.455 14.565-3.682 22.912-3.682 5.809 0 11.537.654 17.265 2.045s10.965 3.6 15.711 6.71c4.746 3.109 8.51 7.282 11.455 12.6 2.864 5.318 4.337 11.946 4.337 19.883v80.184h-27.166v-16.446h-.9c-1.719 3.355-4.092 6.464-7.201 9.328-3.109 2.864-6.955 5.237-11.619 6.955-4.828 1.718-10.229 2.536-16.529 2.536Zm7.364-20.701c5.646 0 10.556-1.145 14.729-3.354 4.173-2.291 7.364-5.237 9.655-9.001 2.292-3.763 3.355-7.854 3.355-12.273v-14.155c-.9.737-2.373 1.391-4.5 2.046-2.128.654-4.419 1.145-7.037 1.636-2.619.491-5.155.9-7.692 1.227-2.537.328-4.746.655-6.628.901-4.173.572-8.019 1.472-11.292 2.781-3.355 1.31-5.973 3.11-7.855 5.401-1.964 2.291-2.864 5.318-2.864 8.918 0 5.237 1.882 9.164 5.728 11.782 3.682 2.782 8.51 4.091 14.401 4.091Zm64.643 18.328V71.839h27.412v19.965h1.227c2.21-6.955 5.974-12.274 11.292-16.038 5.319-3.763 11.456-5.645 18.329-5.645 1.555 0 3.355.082 5.237.163 1.964.164 3.601.328 4.91.573v25.938c-1.227-.41-3.109-.819-5.646-1.146a58.814 58.814 0 0 0-7.446-.49c-5.155 0-9.738 1.145-13.829 3.354-4.091 2.209-7.282 5.236-9.655 9.164-2.373 3.927-3.519 8.427-3.519 13.5v70.448h-28.312ZM222.077 39.192l-8.019 125.923L137.387 0l84.69 39.192Zm-53.105 162.825-57.933 33.056-57.934-33.056 11.783-28.556h92.301l11.783 28.556ZM111.039 62.675l30.357 73.803H80.681l30.358-73.803ZM7.937 165.115 0 39.192 84.69 0 7.937 165.115Z"
+          />
+        </g>
+        <defs>
+          <radialGradient
+            id="c"
+            cx="0"
+            cy="0"
+            r="1"
+            gradientTransform="rotate(118.122 171.182 60.81) scale(205.794)"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop stop-color="#FF41F8" />
+            <stop offset=".707" stop-color="#FF41F8" stop-opacity=".5" />
+            <stop offset="1" stop-color="#FF41F8" stop-opacity="0" />
+          </radialGradient>
+          <linearGradient
+            id="b"
+            x1="0"
+            x2="982"
+            y1="192"
+            y2="192"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop stop-color="#F0060B" />
+            <stop offset="0" stop-color="#F0070C" />
+            <stop offset=".526" stop-color="#CC26D5" />
+            <stop offset="1" stop-color="#7702FF" />
+          </linearGradient>
+          <clipPath id="a"><path fill="#fff" d="M0 0h982v239H0z" /></clipPath>
+        </defs>
+      </svg>
+      <h1>Hello, {{ title() }}</h1>
+      <p>Congratulations! Your app is running. 🎉</p>
+    </div>
+    <div class="divider" role="separator" aria-label="Divider"></div>
+    <div class="right-side">
+      <div class="pill-group">
+        @for (item of [
+          { title: 'Explore the Docs', link: 'https://angular.dev' },
+          { title: 'Learn with Tutorials', link: 'https://angular.dev/tutorials' },
+          { title: 'Prompt and best practices for AI', link: 'https://angular.dev/ai/develop-with-ai'},
+          { title: 'CLI Docs', link: 'https://angular.dev/tools/cli' },
+          { title: 'Angular Language Service', link: 'https://angular.dev/tools/language-service' },
+          { title: 'Angular DevTools', link: 'https://angular.dev/tools/devtools' },
+        ]; track item.title) {
+          <a
+            class="pill"
+            [href]="item.link"
+            target="_blank"
+            rel="noopener"
+          >
+            <span>{{ item.title }}</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              height="14"
+              viewBox="0 -960 960 960"
+              width="14"
+              fill="currentColor"
+            >
+              <path
+                d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h560v-280h80v280q0 33-23.5 56.5T760-120H200Zm188-212-56-56 372-372H560v-80h280v280h-80v-144L388-332Z"
+              />
+            </svg>
+          </a>
+        }
+      </div>
+      <div class="social-links">
+        <a
+          href="https://github.com/angular/angular"
+          aria-label="Github"
+          target="_blank"
+          rel="noopener"
+        >
+          <svg
+            width="25"
+            height="24"
+            viewBox="0 0 25 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            alt="Github"
+          >
+            <path
+              d="M12.3047 0C5.50634 0 0 5.50942 0 12.3047C0 17.7423 3.52529 22.3535 8.41332 23.9787C9.02856 24.0946 9.25414 23.7142 9.25414 23.3871C9.25414 23.0949 9.24389 22.3207 9.23876 21.2953C5.81601 22.0377 5.09414 19.6444 5.09414 19.6444C4.53427 18.2243 3.72524 17.8449 3.72524 17.8449C2.61064 17.082 3.81137 17.0973 3.81137 17.0973C5.04697 17.1835 5.69604 18.3647 5.69604 18.3647C6.79321 20.2463 8.57636 19.7029 9.27978 19.3881C9.39052 18.5924 9.70736 18.0499 10.0591 17.7423C7.32641 17.4347 4.45429 16.3765 4.45429 11.6618C4.45429 10.3185 4.9311 9.22133 5.72065 8.36C5.58222 8.04931 5.16694 6.79833 5.82831 5.10337C5.82831 5.10337 6.85883 4.77319 9.2121 6.36459C10.1965 6.09082 11.2424 5.95546 12.2883 5.94931C13.3342 5.95546 14.3801 6.09082 15.3644 6.36459C17.7023 4.77319 18.7328 5.10337 18.7328 5.10337C19.3942 6.79833 18.9789 8.04931 18.8559 8.36C19.6403 9.22133 20.1171 10.3185 20.1171 11.6618C20.1171 16.3888 17.2409 17.4296 14.5031 17.7321C14.9338 18.1012 15.3337 18.8559 15.3337 20.0084C15.3337 21.6552 15.3183 22.978 15.3183 23.3779C15.3183 23.7009 15.5336 24.0854 16.1642 23.9623C21.0871 22.3484 24.6094 17.7341 24.6094 12.3047C24.6094 5.50942 19.0999 0 12.3047 0Z"
+            />
+          </svg>
+        </a>
+        <a
+          href="https://x.com/angular"
+          aria-label="X"
+          target="_blank"
+          rel="noopener"
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            alt="X"
+          >
+            <path
+              d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
+            />
+          </svg>
+        </a>
+        <a
+          href="https://www.youtube.com/channel/UCbn1OgGei-DV7aSRo_HaAiw"
+          aria-label="Youtube"
+          target="_blank"
+          rel="noopener"
+        >
+          <svg
+            width="29"
+            height="20"
+            viewBox="0 0 29 20"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            alt="Youtube"
+          >
+            <path
+              fill-rule="evenodd"
+              clip-rule="evenodd"
+              d="M27.4896 1.52422C27.9301 1.96749 28.2463 2.51866 28.4068 3.12258C29.0004 5.35161 29.0004 10 29.0004 10C29.0004 10 29.0004 14.6484 28.4068 16.8774C28.2463 17.4813 27.9301 18.0325 27.4896 18.4758C27.0492 18.9191 26.5 19.2389 25.8972 19.4032C23.6778 20 14.8068 20 14.8068 20C14.8068 20 5.93586 20 3.71651 19.4032C3.11363 19.2389 2.56449 18.9191 2.12405 18.4758C1.68361 18.0325 1.36732 17.4813 1.20683 16.8774C0.613281 14.6484 0.613281 10 0.613281 10C0.613281 10 0.613281 5.35161 1.20683 3.12258C1.36732 2.51866 1.68361 1.96749 2.12405 1.52422C2.56449 1.08095 3.11363 0.76113 3.71651 0.596774C5.93586 0 14.8068 0 14.8068 0C14.8068 0 23.6778 0 25.8972 0.596774C26.5 0.76113 27.0492 1.08095 27.4896 1.52422ZM19.3229 10L11.9036 5.77905V14.221L19.3229 10Z"
+            />
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
+<!-- * * * * * * * * * * * The content above * * * * * * * * * * * * -->
+<!-- * * * * * * * * * * is only a placeholder * * * * * * * * * * * -->
+<!-- * * * * * * * * * * and can be replaced.  * * * * * * * * * * * -->
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
+<!-- * * * * * * * * * * End of Placeholder  * * * * * * * * * * * * -->
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
+
+
+<router-outlet />
+</file>
+
+<file path="src/app/app.routes.ts">
+import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
+
+export const routes: Routes = [
+  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  {
+    path: 'login',
+    loadComponent: () => import('./features/auth/login/login.component').then(m => m.LoginComponent)
+  },
+  {
+    path: '',
+    loadComponent: () => import('./features/layout/layout.component').then(m => m.LayoutComponent),
+    canActivate: [authGuard],
+    children: [
+      { path: 'dashboard',    loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent) },
+      { path: 'medicamentos', loadComponent: () => import('./features/medicamentos/medicamentos.component').then(m => m.MedicamentosComponent) },
+      { path: 'clientes',     loadComponent: () => import('./features/clientes/clientes.component').then(m => m.ClientesComponent) },
+      { path: 'ventas',       loadComponent: () => import('./features/ventas/ventas.component').then(m => m.VentasComponent) },
+      { path: 'categorias',   loadComponent: () => import('./features/categorias/categorias.component').then(m => m.CategoriasComponent) },
+      { path: 'proveedores',  loadComponent: () => import('./features/proveedores/proveedores.component').then(m => m.ProveedoresComponent) },
+      { path: 'usuarios',     loadComponent: () => import('./features/usuarios/usuarios.component').then(m => m.UsuariosComponent) },
+    ]
+  },
+  { path: '**', redirectTo: 'dashboard' }
+];
+</file>
+
+<file path="src/app/app.spec.ts">
+import { TestBed } from '@angular/core/testing';
+import { App } from './app';
+
+describe('App', () => {
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [App],
+    }).compileComponents();
+  });
+
+  it('should create the app', () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance;
+    expect(app).toBeTruthy();
+  });
+
+  it('should render title', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, angular-project-1');
+  });
+});
+</file>
+
+<file path="src/app/app.ts">
+import { Component, signal } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+
+@Component({
+  selector: 'app-root',
+  imports: [RouterOutlet],
+  templateUrl: './app.html',
+  styleUrl: './app.css'
+})
+export class App {
+  protected readonly title = signal('angular-project-1');
+}
+</file>
+
+<file path="src/environments/environment.prod.ts">
+export const environment = {
+  production: true,
+  apiUrl: 'http://localhost:8080/api'
+};
+</file>
+
+<file path="src/environments/environment.ts">
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:8080/api'
+};
+</file>
+
+<file path="src/index.html">
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Farmacia SaludPlus</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='13' y='2' width='6' height='28' rx='3' fill='%2316a34a'/><rect x='2' y='13' width='28' height='6' rx='3' fill='%2316a34a'/></svg>">
+</head>
+<body>
+  <app-root></app-root>
+</body>
+</html>
+</file>
+
+<file path="src/main.ts">
+import { bootstrapApplication } from '@angular/platform-browser';
+import { AppComponent } from './app/app.component';
+import { appConfig } from './app/app.config';
+
+bootstrapApplication(AppComponent, appConfig).catch(err => console.error(err));
+</file>
+
+<file path="src/styles.css">
+/* ════════════════════════════════════════════════════════
+   FARMACIA SALUDPLUS — Design System
+   Estilo: Moderno Minimalista · Blanco + Acento Verde
+   Tipografía: Sora (display) + Outfit (cuerpo)
+════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --accent:        #16a34a;
+  --accent-dark:   #15803d;
+  --accent-light:  #dcfce7;
+  --accent-muted:  #f0fdf4;
+  --white:         #ffffff;
+  --gray-50:       #f9fafb;
+  --gray-100:      #f3f4f6;
+  --gray-200:      #e5e7eb;
+  --gray-300:      #d1d5db;
+  --gray-400:      #9ca3af;
+  --gray-500:      #6b7280;
+  --gray-600:      #4b5563;
+  --gray-700:      #374151;
+  --gray-800:      #1f2937;
+  --gray-900:      #111827;
+  --danger:        #ef4444;
+  --danger-light:  #fef2f2;
+  --warning:       #f59e0b;
+  --warning-light: #fffbeb;
+  --info:          #3b82f6;
+  --info-light:    #eff6ff;
+  --navbar-h:      60px;
+  --page-max:      1400px;
+  --radius-sm:     6px;
+  --radius:        10px;
+  --radius-lg:     16px;
+  --radius-xl:     24px;
+  --shadow-xs:     0 1px 2px rgba(0,0,0,.05);
+  --shadow-sm:     0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+  --shadow:        0 4px 12px rgba(0,0,0,.08);
+  --shadow-lg:     0 10px 32px rgba(0,0,0,.10);
+  --transition:    all .18s cubic-bezier(.4,0,.2,1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--gray-50);
+  color: var(--gray-900);
+  line-height: 1.55;
+}
+h1,h2,h3 { font-family: 'Sora', sans-serif; font-weight: 700; line-height: 1.25; }
+h4,h5,h6 { font-family: 'Outfit', sans-serif; font-weight: 600; }
+a { color: var(--accent); text-decoration: none; }
+button { font-family: 'Outfit', sans-serif; cursor: pointer; border: none; outline: none; }
+input, select, textarea { font-family: 'Outfit', sans-serif; font-size: 0.9rem; }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 0.72rem; font-weight: 600; letter-spacing: .03em; white-space: nowrap;
+}
+.badge-success { background: var(--accent-light); color: var(--accent-dark); }
+.badge-danger  { background: var(--danger-light); color: #dc2626; }
+.badge-warning { background: var(--warning-light); color: #b45309; }
+.badge-info    { background: var(--info-light); color: #1d4ed8; }
+.badge-gray    { background: var(--gray-100); color: var(--gray-600); }
+
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--accent-light);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .65s linear infinite;
+}
+.spinner-sm { width: 20px; height: 20px; border-width: 2px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-in   { animation: fadeInUp .3s ease both; }
+.fade-in-2 { animation: fadeInUp .3s .06s ease both; }
+.fade-in-3 { animation: fadeInUp .3s .12s ease both; }
+.fade-in-4 { animation: fadeInUp .3s .18s ease both; }
+.fade-in-5 { animation: fadeInUp .3s .24s ease both; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 18px; border-radius: var(--radius);
+  font-size: 0.875rem; font-weight: 600;
+  transition: var(--transition); cursor: pointer; border: none; white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: var(--white); box-shadow: 0 2px 8px rgba(22,163,74,.25); }
+.btn-primary:hover { background: var(--accent-dark); box-shadow: 0 4px 14px rgba(22,163,74,.35); transform: translateY(-1px); }
+.btn-secondary { background: var(--white); color: var(--gray-700); border: 1.5px solid var(--gray-200); box-shadow: var(--shadow-xs); }
+.btn-secondary:hover { background: var(--gray-50); border-color: var(--gray-300); }
+.btn-danger { background: var(--danger); color: var(--white); }
+.btn-danger:hover { background: #dc2626; }
+.btn-ghost { background: transparent; color: var(--gray-600); padding: 7px 12px; }
+.btn-ghost:hover { background: var(--gray-100); color: var(--gray-900); }
+.btn-icon { padding: 8px; border-radius: var(--radius-sm); }
+.btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+.btn:disabled { opacity: .55; cursor: not-allowed; transform: none !important; }
+
+.card { background: var(--white); border-radius: var(--radius-lg); border: 1.5px solid var(--gray-200); box-shadow: var(--shadow-sm); }
+.card-body { padding: 24px; }
+.card-header {
+  padding: 18px 24px; border-bottom: 1.5px solid var(--gray-100);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.card-header h2, .card-header h3 { font-family: 'Sora', sans-serif; font-size: 1.05rem; font-weight: 700; }
+
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-label { font-size: 0.82rem; font-weight: 600; color: var(--gray-700); }
+.form-control {
+  width: 100%; padding: 10px 14px;
+  border: 1.5px solid var(--gray-200); border-radius: var(--radius);
+  background: var(--white); color: var(--gray-900);
+  font-size: 0.9rem; transition: var(--transition); outline: none;
+}
+.form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(22,163,74,.12); }
+.form-control.is-invalid { border-color: var(--danger); }
+.form-control:disabled { background: var(--gray-50); color: var(--gray-500); }
+.form-error { font-size: 0.78rem; color: var(--danger); }
+.form-hint  { font-size: 0.78rem; color: var(--gray-500); }
+
+.table-wrapper { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.table th {
+  padding: 11px 16px; text-align: left;
+  font-size: 0.75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--gray-500); background: var(--gray-50); border-bottom: 1.5px solid var(--gray-200);
+}
+.table td { padding: 13px 16px; border-bottom: 1px solid var(--gray-100); color: var(--gray-700); vertical-align: middle; }
+.table tbody tr:hover { background: var(--gray-50); }
+.table tbody tr:last-child td { border-bottom: none; }
+
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 20px; animation: fadeOverlay .2s ease;
+}
+@keyframes fadeOverlay { from { opacity: 0; } to { opacity: 1; } }
+.modal {
+  background: var(--white); border-radius: var(--radius-xl);
+  width: 100%; max-width: 560px;
+  box-shadow: var(--shadow-lg);
+  animation: slideModal .25s cubic-bezier(.34,1.56,.64,1);
+  max-height: 90vh; overflow-y: auto;
+}
+.modal-lg { max-width: 760px; }
+.modal-xl { max-width: 960px; }
+@keyframes slideModal {
+  from { opacity: 0; transform: scale(.94) translateY(10px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-header {
+  padding: 22px 28px 18px; border-bottom: 1.5px solid var(--gray-100);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-header h2 { font-size: 1.15rem; }
+.modal-body { padding: 24px 28px; }
+.modal-footer {
+  padding: 16px 28px 22px; display: flex; justify-content: flex-end; gap: 10px;
+  border-top: 1.5px solid var(--gray-100);
+}
+
+.pagination {
+  display: flex; align-items: center; gap: 6px;
+  padding: 16px 24px; border-top: 1.5px solid var(--gray-100);
+  justify-content: space-between; flex-wrap: wrap;
+}
+.pagination-info { font-size: 0.82rem; color: var(--gray-500); }
+.pagination-btns { display: flex; gap: 4px; }
+.page-btn {
+  min-width: 34px; height: 34px; padding: 0 10px;
+  border-radius: var(--radius-sm); border: 1.5px solid var(--gray-200);
+  background: var(--white); color: var(--gray-700);
+  font-size: 0.82rem; font-weight: 600; cursor: pointer;
+  transition: var(--transition); display: inline-flex; align-items: center; justify-content: center;
+}
+.page-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.page-btn.active { background: var(--accent); border-color: var(--accent); color: var(--white); }
+.page-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+.alert {
+  padding: 12px 16px; border-radius: var(--radius);
+  display: flex; align-items: center; gap: 10px;
+  font-size: 0.875rem; font-weight: 500;
+}
+.alert-danger  { background: var(--danger-light); color: #dc2626; border: 1px solid #fecaca; }
+.alert-success { background: var(--accent-muted); color: var(--accent-dark); border: 1px solid #bbf7d0; }
+.alert-warning { background: var(--warning-light); color: #b45309; border: 1px solid #fde68a; }
+
+.page { padding: 28px 32px; max-width: var(--page-max); animation: fadeInUp .3s ease both; }
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px; gap: 16px; flex-wrap: wrap;
+}
+.page-title { font-size: 1.6rem; font-weight: 800; color: var(--gray-900); }
+.page-subtitle { font-size: 0.875rem; color: var(--gray-500); margin-top: 2px; }
+
+.empty-state { text-align: center; padding: 64px 32px; }
+.empty-icon {
+  width: 72px; height: 72px; background: var(--gray-100);
+  border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px; color: var(--gray-400);
+}
+.empty-title { font-family: 'Sora', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; }
+.empty-desc  { font-size: 0.875rem; color: var(--gray-500); }
+
+.search-bar { position: relative; display: flex; align-items: center; }
+.search-bar svg { position: absolute; left: 12px; color: var(--gray-400); pointer-events: none; }
+.search-input {
+  padding: 9px 14px 9px 38px; border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius); background: var(--white);
+  font-size: 0.875rem; width: 260px; transition: var(--transition); outline: none;
+}
+.search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(22,163,74,.10); width: 300px; }
+
+.toolbar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 24px; border-bottom: 1.5px solid var(--gray-100); flex-wrap: wrap;
+}
+.toolbar-left  { display: flex; align-items: center; gap: 10px; flex: 1; flex-wrap: wrap; }
+.toolbar-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+.filter-select {
+  padding: 8px 32px 8px 14px; border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius); background: var(--white);
+  font-size: 0.82rem; font-weight: 500; cursor: pointer;
+  appearance: none; outline: none; transition: var(--transition);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+}
+.filter-select:focus { border-color: var(--accent); }
+
+.stock-bar-wrap { display: flex; align-items: center; gap: 8px; }
+.stock-bar { flex: 1; height: 6px; background: var(--gray-100); border-radius: 3px; overflow: hidden; }
+.stock-bar-fill { height: 100%; border-radius: 3px; transition: width .4s ease; }
+.stock-bar-fill.ok     { background: var(--accent); }
+.stock-bar-fill.warn   { background: var(--warning); }
+.stock-bar-fill.danger { background: var(--danger); }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.col-span-2 { grid-column: span 2; }
+
+@media (max-width: 768px) {
+  .page { padding: 20px 16px; }
+  .page-title { font-size: 1.35rem; }
+  .search-input, .search-input:focus { width: 100%; }
+  .modal { border-radius: var(--radius-lg); }
+  .form-grid, .form-grid-3 { grid-template-columns: 1fr; }
+  .col-span-2 { grid-column: span 1; }
+}
+</file>
+
+<file path=".editorconfig">
+# Editor configuration, see https://editorconfig.org
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.ts]
+quote_type = single
+ij_typescript_use_double_quotes = false
+
+[*.md]
+max_line_length = off
+trim_trailing_whitespace = false
+</file>
+
+<file path=".gitignore">
+# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# Compiled output
+/dist
+/tmp
+/out-tsc
+/bazel-out
+
+# Node
+/node_modules
+npm-debug.log
+yarn-error.log
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/mcp.json
+.history/*
+
+# Miscellaneous
+/.angular/cache
+.sass-cache/
+/connect.lock
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
+__screenshots__/
+
+# System files
+.DS_Store
+Thumbs.db
+</file>
+
+<file path=".prettierrc">
+{
+  "printWidth": 100,
+  "singleQuote": true,
+  "overrides": [
+    {
+      "files": "*.html",
+      "options": {
+        "parser": "angular"
+      }
+    }
+  ]
+}
+</file>
+
+<file path="angular.json">
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "farmacia-salud-frontend": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:application",
+          "options": {
+            "outputPath": "dist/farmacia-salud-frontend",
+            "index": "src/index.html",
+            "browser": "src/main.ts",
+            "polyfills": ["zone.js"],
+            "tsConfig": "tsconfig.app.json",
+            "assets": ["src/favicon.ico", "src/assets"],
+            "styles": ["src/styles.css"],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {"type": "initial", "maximumWarning": "500kb", "maximumError": "1mb"},
+                {"type": "anyComponentStyle", "maximumWarning": "2kb", "maximumError": "4kb"}
+              ],
+              "outputHashing": "all"
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "configurations": {
+            "production": {"buildTarget": "farmacia-salud-frontend:build:production"},
+            "development": {"buildTarget": "farmacia-salud-frontend:build:development"}
+          },
+          "defaultConfiguration": "development"
+        }
+      }
+    }
+  },
+  "cli": {
+    "analytics": "9fb81314-ed3f-4863-a3e4-e102946189b2"
+  }
+}
+</file>
+
+<file path="package.json">
+{
+  "name": "farmacia-salud-frontend",
+  "version": "1.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development"
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/animations": "^21.2.18",
+    "@angular/common": "^21.2.18",
+    "@angular/compiler": "^21.2.18",
+    "@angular/core": "^21.2.18",
+    "@angular/forms": "^21.2.18",
+    "@angular/platform-browser": "^21.2.18",
+    "@angular/platform-browser-dynamic": "^21.2.18",
+    "@angular/router": "^21.2.18",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^21.2.19",
+    "@angular/cli": "^21.2.19",
+    "@angular/compiler-cli": "^21.2.18",
+    "typescript": "~5.9.0",
+    "zone.js": "^0.16.2"
+  }
+}
+</file>
+
+<file path="README.md">
+# 🏥 Farmacia SaludPlus — Frontend Angular
+
+Sistema de gestión farmacéutica completo con Angular 17+.
+
+## 🚀 Instalación y Ejecución
+
+```bash
+cd farmacia-angular
+npm install
+ng serve
+```
+
+Abrir **http://localhost:4200**
+
+## 🔑 Credenciales de prueba
+
+| Usuario | Contraseña | Rol |
+|---------|-----------|-----|
+| `admin` | `password` | ADMIN |
+| `empleado1` | `password` | EMPLEADO |
+
+> ⚠️ Las contraseñas BCrypt en el SQL son hash de `"password"`. Ajusta según tu backend.
+
+## 📋 Módulos implementados
+
+| Módulo | Funcionalidades |
+|--------|----------------|
+| **Login** | Autenticación JWT, validación, mostrar/ocultar contraseña |
+| **Dashboard** | KPIs de ventas, alertas de stock bajo y vencimientos |
+| **Medicamentos** | CRUD completo, paginación, búsqueda, filtros, barra de stock |
+| **Clientes** | CRUD, búsqueda por nombre/DNI/email, toggle activo |
+| **Ventas** | Registro con múltiples productos, cálculo automático, detalle, anulación |
+| **Categorías** | CRUD con vista de tarjetas |
+| **Proveedores** | CRUD en tabla con toggle de estado |
+| **Usuarios** | CRUD (solo ADMIN), gestión de contraseñas |
+
+## 🎨 Diseño
+
+- **Estilo**: Moderno minimalista, blanco puro + acento verde
+- **Tipografía**: Sora (títulos) + Outfit (cuerpo)
+- **Layout**: Navbar horizontal sticky, responsive con menú hamburguesa en móvil
+- **Angular 17+**: Standalone components, signals reactivos, control flow (@if, @for)
+
+## 🔧 Backend requerido
+
+Spring Boot en `http://localhost:8080`  
+Ver proyecto `farmacia-salud-v2` para el backend.
+</file>
+
+<file path="tsconfig.app.json">
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/app",
+    "types": []
+  },
+  "files": ["src/main.ts"],
+  "include": ["src/**/*.d.ts"]
+}
+</file>
+
+<file path="tsconfig.json">
+{
+  "compileOnError": false,
+  "compilerOptions": {
+    "baseUrl": "./",
+    "outDir": "./dist/out-tsc",
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "sourceMap": true,
+    "declaration": false,
+    "experimentalDecorators": true,
+    "moduleResolution": "bundler",
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "ES2022",
+    "useDefineForClassFields": false,
+    "lib": ["ES2022", "dom"]
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
+  }
+}
+</file>
+
+<file path="tsconfig.spec.json">
+/* To learn more about Typescript configuration file: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html. */
+/* To learn more about Angular compiler options: https://angular.dev/reference/configs/angular-compiler-options. */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/spec",
+    "types": [
+      "vitest/globals"
+    ]
+  },
+  "include": [
+    "src/**/*.d.ts",
+    "src/**/*.spec.ts"
+  ]
+}
+</file>
+
+</files>

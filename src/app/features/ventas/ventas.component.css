@@ -1,0 +1,30 @@
+/* ── Fila de detalle de producto dentro del formulario de venta ──
+   El combobox de medicamento domina el ancho (es la decisión principal),
+   cantidad es un campo angosto de apoyo, y el botón de quitar queda
+   alineado al final — misma lógica de "un foco por fila" del resto
+   del sistema, aplicada a un formulario dinámico. */
+.detalle-row {
+  display: grid;
+  grid-template-columns: 1fr 100px auto;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 10px;
+  padding: 12px;
+  background: var(--gray-50);
+  border-radius: var(--radius);
+}
+
+.detalle-remove {
+  margin-bottom: 0;
+}
+
+.detalle-section-title {
+  font-size: .9rem;
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .detalle-row {
+    grid-template-columns: 1fr;
+  }
+}

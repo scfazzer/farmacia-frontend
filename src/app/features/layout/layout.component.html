@@ -1,0 +1,84 @@
+<div class="app-shell" [class.is-collapsed]="collapsed()">
+
+  <!-- ══ SIDEBAR (desktop) ══ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <a routerLink="/dashboard" class="brand-link">
+        <div class="brand-icon">+</div>
+        @if (!collapsed()) { <span class="brand-name">SaludPlus</span> }
+      </a>
+    </div>
+
+    <nav class="sidebar-nav">
+      @for (group of visibleGroups(); track group.label) {
+        <div class="nav-group">
+          @if (!collapsed()) {
+            <div class="nav-group-label">{{ group.label }}</div>
+          }
+          @for (item of group.items; track item.route) {
+            <a [routerLink]="item.route" routerLinkActive="active" class="nav-item" [title]="collapsed() ? item.label : null">
+              <span class="nav-item-icon"><app-nav-icon [name]="item.icon" /></span>
+              @if (!collapsed()) { <span class="nav-item-label">{{ item.label }}</span> }
+            </a>
+          }
+        </div>
+      }
+    </nav>
+
+    <button class="sidebar-collapse-btn" (click)="toggleCollapsed()" [title]="collapsed() ? 'Expandir menú' : 'Contraer menú'">
+      <span class="collapse-icon" [class.is-flipped]="collapsed()"><app-nav-icon name="collapse" /></span>
+      @if (!collapsed()) { <span>Contraer menú</span> }
+    </button>
+  </aside>
+
+  <div class="shell-main">
+
+    <!-- ══ TOPBAR: sesión, no navegación ══ -->
+    <header class="topbar">
+      <button class="mobile-burger" (click)="mobileMenuOpen.set(!mobileMenuOpen())" aria-label="Abrir menú">
+        @if (mobileMenuOpen()) {
+          <svg viewBox="0 0 20 20" fill="currentColor" width="20"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/></svg>
+        } @else {
+          <svg viewBox="0 0 20 20" fill="currentColor" width="20"><path fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 5A.75.75 0 012.75 9h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 9.75zM2.75 14a.75.75 0 000 1.5h14.5a.75.75 0 000-1.5H2.75z" clip-rule="evenodd"/></svg>
+        }
+      </button>
+
+      <div class="topbar-spacer"></div>
+
+      <div class="user-pill">
+        <div class="user-avatar">{{ auth.currentUser()?.nombreCompleto?.charAt(0) }}</div>
+        <div class="user-info">
+          <span class="user-name">{{ auth.currentUser()?.nombreCompleto }}</span>
+          <span class="user-role" [class.is-admin]="auth.isAdmin()">
+            {{ auth.currentUser()?.rol }}
+          </span>
+        </div>
+      </div>
+      <button class="btn-logout" (click)="auth.logout()" title="Cerrar sesión" aria-label="Cerrar sesión">
+        <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M3.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h4a.75.75 0 000-1.5H4.5v-11h3.25a.75.75 0 000-1.5h-4zM12.53 9.25l-2.72-2.72a.75.75 0 011.06-1.06l4 4a.75.75 0 010 1.06l-4 4a.75.75 0 11-1.06-1.06l2.72-2.72H6.75a.75.75 0 010-1.5h5.78z" clip-rule="evenodd"/></svg>
+      </button>
+    </header>
+
+    <!-- Menú móvil -->
+    @if (mobileMenuOpen()) {
+      <nav class="mobile-nav">
+        @for (item of visibleNavFlat(); track item.route) {
+          <a [routerLink]="item.route" routerLinkActive="active"
+             class="mobile-nav-link" (click)="mobileMenuOpen.set(false)">
+            <app-nav-icon [name]="item.icon" class="nav-icon" />
+            {{ item.label }}
+          </a>
+        }
+        <button class="mobile-logout" (click)="auth.logout()">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M3.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h4a.75.75 0 000-1.5H4.5v-11h3.25a.75.75 0 000-1.5h-4zM12.53 9.25l-2.72-2.72a.75.75 0 011.06-1.06l4 4a.75.75 0 010 1.06l-4 4a.75.75 0 11-1.06-1.06l2.72-2.72H6.75a.75.75 0 010-1.5h5.78z" clip-rule="evenodd"/></svg>
+          Cerrar sesión
+        </button>
+      </nav>
+    }
+
+    <!-- ══ CONTENIDO ══ -->
+    <main class="main-content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

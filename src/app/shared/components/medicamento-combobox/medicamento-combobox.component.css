@@ -1,0 +1,96 @@
+.combobox {
+  position: relative;
+  width: 100%;
+}
+
+.combobox-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.combobox-search-icon {
+  position: absolute; left: 12px;
+  color: var(--gray-400);
+  pointer-events: none;
+}
+.combobox-input {
+  padding-left: 34px;
+  padding-right: 32px;
+}
+.combobox-input.has-selection { font-weight: 600; color: var(--gray-900); }
+.combobox-check-icon {
+  position: absolute; right: 11px;
+  color: var(--accent);
+  pointer-events: none;
+}
+
+/* ── Panel de resultados ──
+   Un nivel de elevación por encima del modal que lo contiene:
+   mismo radius que el resto del sistema, sombra fuerte (shadow-lg)
+   porque flota sobre contenido, no sobre el canvas base. */
+.combobox-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0; right: 0;
+  z-index: 50;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: comboboxIn .15s cubic-bezier(.23,1,.32,1) both;
+  transform-origin: top center;
+}
+@keyframes comboboxIn {
+  from { opacity: 0; transform: scale(.98) translateY(-4px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.combobox-list {
+  list-style: none;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.combobox-option {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 9px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.combobox-option.is-active { background: var(--gray-100); }
+.combobox-option.is-selected { background: var(--accent-muted); }
+.combobox-option.is-selected.is-active { background: var(--accent-light); }
+
+.combobox-option-main { min-width: 0; flex: 1; }
+.combobox-option-name {
+  display: flex; align-items: center; gap: 6px;
+  font-size: .875rem; font-weight: 600; color: var(--gray-900);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.combobox-option-meta {
+  font-size: .75rem; color: var(--gray-500); margin-top: 1px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.combobox-rx-badge { padding: 1px 6px; font-size: .62rem; flex-shrink: 0; }
+
+.combobox-option-side { text-align: right; flex-shrink: 0; }
+.combobox-option-price {
+  font-size: .82rem; font-weight: 700; color: var(--accent-dark);
+  font-variant-numeric: tabular-nums;
+}
+.combobox-option-stock {
+  font-size: .7rem; font-weight: 600; margin-top: 1px;
+}
+.combobox-option-stock.is-ok    { color: var(--gray-400); }
+.combobox-option-stock.is-warn  { color: var(--warning); }
+.combobox-option-stock.is-danger{ color: var(--danger); }
+
+.combobox-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 28px 16px;
+  color: var(--gray-400);
+  font-size: .82rem;
+  text-align: center;
+}

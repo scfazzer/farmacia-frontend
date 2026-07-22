@@ -1,0 +1,232 @@
+<div class="page fade-in">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><app-nav-icon name="cart" class="page-title-icon" />Ventas</h1>
+      <p class="page-subtitle">Registro y seguimiento de ventas</p>
+    </div>
+    <button class="btn btn-primary" (click)="openCreate()">
+      <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+      Nueva Venta
+    </button>
+  </div>
+
+  <!-- Stats rápidas -->
+  <div class="stat-grid">
+    <div class="card card-body fade-in-2" style="padding:18px">
+      <div class="eyebrow">Ventas hoy</div>
+      <div class="stat-value stat-value-lg">{{ ventasHoy() }}</div>
+    </div>
+    <div class="card card-body fade-in-3" style="padding:18px">
+      <div class="eyebrow">Total hoy</div>
+      <div class="stat-value stat-value-lg stat-value-accent">S/. {{ totalHoy() | number:'1.2-2' }}</div>
+    </div>
+    <div class="card card-body fade-in-4" style="padding:18px">
+      <div class="eyebrow">Total ventas</div>
+      <div class="stat-value stat-value-lg">{{ items().length }}</div>
+    </div>
+  </div>
+
+  @if (success()) { <div class="alert alert-success fade-in mb-16"><svg viewBox="0 0 20 20" fill="currentColor" width="16" class="alert-icon"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg> {{ success() }}</div> }
+
+  <div class="card fade-in-2">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="search-bar">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
+          <input class="search-input" type="text" placeholder="Buscar por cliente o N°..." (input)="onSearch($event)">
+        </div>
+        <select class="filter-select" (change)="onFilterEstado($event)">
+          <option value="">Todos los estados</option>
+          <option value="COMPLETADA">Completadas</option>
+          <option value="ANULADA">Anuladas</option>
+        </select>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="loading-block"><div class="spinner"></div></div>
+    } @else {
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>N° Venta</th>
+              <th>Fecha</th>
+              <th>Cliente</th>
+              <th>Productos</th>
+              <th>Total</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (v of filtered(); track v.id) {
+              <tr>
+                <td><span class="text-mono-accent">#{{ v.id.toString().padStart(4,'0') }}</span></td>
+                <td class="text-sm">{{ v.fechaVenta | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td>
+                  @if (v.clienteNombre) {
+                    <div class="text-bold">{{ v.clienteNombre }}</div>
+                    <div class="text-xxs">DNI: {{ v.clienteDni }}</div>
+                  } @else {
+                    <span class="badge badge-gray">Cliente ocasional</span>
+                  }
+                </td>
+                <td><span class="badge badge-info">{{ v.detalles ? v.detalles.length : 0 }} ítem(s)</span></td>
+                <td style="font-family:'Sora',sans-serif;font-weight:700;font-size:1rem;color:var(--gray-900)">
+                  S/. {{ v.totalVenta | number:'1.2-2' }}
+                </td>
+                <td>
+                  <span class="badge" [class.badge-success]="v.estado==='COMPLETADA'" [class.badge-danger]="v.estado==='ANULADA'">
+                    {{ v.estado }}
+                  </span>
+                </td>
+                <td>
+                  <div class="row-gap-6">
+                    <button class="btn btn-ghost btn-icon btn-sm" title="Ver detalle" (click)="verDetalle(v)">
+                      <svg viewBox="0 0 20 20" fill="currentColor" width="15"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>
+                    </button>
+                    @if (v.estado === 'COMPLETADA') {
+                      <button class="btn btn-ghost btn-icon btn-sm" title="Anular" (click)="anular(v.id)" class="text-danger">
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="15"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Modal Nueva Venta -->
+@if (showModal()) {
+  <div class="modal-overlay" (click)="closeModal()">
+    <div class="modal modal-xl" (click)="$event.stopPropagation()" style="max-height:92vh">
+      <div class="modal-header">
+        <h2 class="modal-title-icon"><app-nav-icon name="cart" />Nueva Venta</h2>
+        <button class="btn btn-ghost btn-icon" (click)="closeModal()">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="18"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        @if (error()) { <div class="alert alert-danger" class="mb-14">{{ error() }}</div> }
+        <form [formGroup]="form">
+          <div class="form-grid" class="mb-20">
+            <div class="form-group">
+              <label class="form-label">Cliente (opcional)</label>
+              <select class="form-control filter-select" formControlName="clienteId" style="padding:10px 14px">
+                <option [value]="null">Cliente ocasional (sin registro)</option>
+                @for (c of clientes(); track c.id) {
+                  <option [value]="c.id">{{ c.nombre }} — {{ c.dni }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Observación</label>
+              <input class="form-control" formControlName="observacion" placeholder="Notas opcionales...">
+            </div>
+          </div>
+
+          <div class="mb-12">
+            <div class="row-between mb-10">
+              <h4 class="detalle-section-title">Productos</h4>
+              <button type="button" class="btn btn-secondary btn-sm" (click)="agregarDetalle()">+ Agregar producto</button>
+            </div>
+
+            @for (ctrl of detallesArray.controls; track ctrl; let i = $index) {
+              <div [formGroup]="$any(ctrl)" class="detalle-row">
+                <div class="form-group mb-0">
+                  <label class="form-label">Medicamento *</label>
+                  <app-medicamento-combobox
+                    [medicamentos]="medicamentos()"
+                    formControlName="medicamentoId"
+                  />
+                </div>
+                <div class="form-group mb-0">
+                  <label class="form-label">Cantidad</label>
+                  <input class="form-control" type="number" min="1" formControlName="cantidad">
+                </div>
+                <button type="button" class="btn btn-ghost btn-icon text-danger mb-0 detalle-remove" (click)="quitarDetalle(i)">
+                  <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                </button>
+              </div>
+            }
+          </div>
+
+          <div class="info-panel">
+            <span style="font-weight:600;color:var(--accent-dark)">Total estimado:</span>
+            <span class="stat-value stat-value-md stat-value-accent">
+              S/. {{ totalCalculado() | number:'1.2-2' }}
+            </span>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" (click)="save()" [disabled]="form.invalid || saving()">
+          @if (saving()) { <div class="spinner spinner-sm"></div> }
+          Registrar Venta
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal Detalle Venta -->
+@if (showDetalle() && ventaDetalle()) {
+  <div class="modal-overlay" (click)="showDetalle.set(false)">
+    <div class="modal modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Venta #{{ ventaDetalle()!.id.toString().padStart(4,'0') }}</h2>
+        <button class="btn btn-ghost btn-icon" (click)="showDetalle.set(false)">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="18"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+          <div>
+            <div class="form-label">Cliente</div>
+            <div class="text-bold">{{ ventaDetalle()!.clienteNombre || 'Cliente ocasional' }}</div>
+          </div>
+          <div>
+            <div class="form-label">Fecha</div>
+            <div>{{ ventaDetalle()!.fechaVenta | date:'dd/MM/yyyy HH:mm' }}</div>
+          </div>
+          <div>
+            <div class="form-label">Atendido por</div>
+            <div>{{ ventaDetalle()!.usuarioNombre }}</div>
+          </div>
+          <div>
+            <div class="form-label">Estado</div>
+            <span class="badge" [class.badge-success]="ventaDetalle()!.estado==='COMPLETADA'" [class.badge-danger]="ventaDetalle()!.estado==='ANULADA'">{{ ventaDetalle()!.estado }}</span>
+          </div>
+        </div>
+        <table class="table" class="mb-16">
+          <thead><tr><th>Medicamento</th><th>Cant.</th><th>Precio Unit.</th><th>Subtotal</th></tr></thead>
+          <tbody>
+            @for (d of ventaDetalle()!.detalles; track d.id) {
+              <tr>
+                <td>{{ d.medicamentoNombre }}</td>
+                <td>{{ d.cantidad }}</td>
+                <td>S/. {{ d.precioUnitario | number:'1.2-2' }}</td>
+                <td class="text-bold">S/. {{ d.subtotal | number:'1.2-2' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        <div style="text-align:right;font-family:'Sora',sans-serif;font-size:1.3rem;font-weight:800;color:var(--accent)">
+          Total: S/. {{ ventaDetalle()!.totalVenta | number:'1.2-2' }}
+        </div>
+        @if (ventaDetalle()!.observacion) {
+          <div class="mt-12 note-box">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="13" class="inline-icon"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 5a1 1 0 000 2h6a1 1 0 100-2H6zm0 4a1 1 0 100 2h3a1 1 0 100-2H6z" clip-rule="evenodd"/></svg>{{ ventaDetalle()!.observacion }}
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}

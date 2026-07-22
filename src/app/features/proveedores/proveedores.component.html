@@ -1,0 +1,99 @@
+<div class="page fade-in">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><app-nav-icon name="truck" class="page-title-icon" />Proveedores</h1>
+      <p class="page-subtitle">Gestión de proveedores farmacéuticos</p>
+    </div>
+    <button class="btn btn-primary" (click)="openCreate()">
+      <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+      Nuevo Proveedor
+    </button>
+  </div>
+
+  @if (success()) { <div class="alert alert-success mb-16"><svg viewBox="0 0 20 20" fill="currentColor" width="16" class="alert-icon"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg> {{ success() }}</div> }
+
+  @if (loading()) {
+    <div class="loading-block"><div class="spinner"></div></div>
+  } @else {
+    <div class="card">
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr><th>Proveedor</th><th>RUC</th><th>Contacto</th><th>Dirección</th><th>Estado</th><th>Acciones</th></tr>
+          </thead>
+          <tbody>
+            @for (p of items(); track p.id) {
+              <tr>
+                <td class="text-bold">{{ p.nombre }}</td>
+                <td style="font-family:monospace;font-size:.875rem">{{ p.ruc }}</td>
+                <td>
+                  @if (p.telefono) { <div><svg viewBox="0 0 20 20" fill="currentColor" width="13" class="inline-icon"><path d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-.826 1.68l-1.293.646a11.037 11.037 0 006.105 6.105l.646-1.293a1.5 1.5 0 011.68-.826l3.223.716A1.5 1.5 0 0118 14.35V15.5a1.5 1.5 0 01-1.5 1.5H15c-1.149 0-2.263-.15-3.326-.43A13.022 13.022 0 013.43 8.326 13.019 13.019 0 013 5V3.5z"/></svg> {{ p.telefono }}</div> }
+                  @if (p.email) { <div class="text-xs">{{ p.email }}</div> }
+                </td>
+                <td style="font-size:.82rem;color:var(--gray-600);max-width:180px">{{ p.direccion || '—' }}</td>
+                <td>
+                  <button class="badge" style="cursor:pointer;border:none" [class.badge-success]="p.activo" [class.badge-gray]="!p.activo" (click)="toggleEstado(p)">
+                    {{ p.activo ? 'Activo' : 'Inactivo' }}
+                  </button>
+                </td>
+                <td>
+                  <button class="btn btn-ghost btn-icon btn-sm" (click)="openEdit(p)">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="15"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>
+
+@if (showModal()) {
+  <div class="modal-overlay" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingId() ? 'Editar Proveedor' : 'Nuevo Proveedor' }}</h2>
+        <button class="btn btn-ghost btn-icon" (click)="closeModal()">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="18"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        @if (error()) { <div class="alert alert-danger" class="mb-14">{{ error() }}</div> }
+        <form [formGroup]="form">
+          <div class="form-grid">
+            <div class="form-group col-span-2">
+              <label class="form-label">Nombre *</label>
+              <input class="form-control" formControlName="nombre" [class.is-invalid]="f['nombre'].invalid && f['nombre'].touched">
+            </div>
+            <div class="form-group">
+              <label class="form-label">RUC *</label>
+              <input class="form-control" formControlName="ruc" [class.is-invalid]="f['ruc'].invalid && f['ruc'].touched" placeholder="20100055948" maxlength="11">
+              @if (f['ruc'].errors?.['pattern'] && f['ruc'].touched) { <span class="form-error">Debe tener 11 dígitos</span> }
+            </div>
+            <div class="form-group">
+              <label class="form-label">Teléfono</label>
+              <input class="form-control" formControlName="telefono">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input class="form-control" type="email" formControlName="email">
+            </div>
+            <div class="form-group col-span-2">
+              <label class="form-label">Dirección</label>
+              <input class="form-control" formControlName="direccion">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" (click)="save()" [disabled]="form.invalid || saving()">
+          @if (saving()) { <div class="spinner spinner-sm"></div> }
+          Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+}

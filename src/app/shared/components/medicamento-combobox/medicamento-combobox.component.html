@@ -1,0 +1,72 @@
+<div class="combobox" #host>
+  <div class="combobox-input-wrap">
+    <svg viewBox="0 0 20 20" fill="currentColor" width="15" class="combobox-search-icon">
+      <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+    </svg>
+    <input
+      #inputEl
+      type="text"
+      class="form-control combobox-input"
+      [class.has-selection]="selectedMed() && !open()"
+      [placeholder]="placeholder()"
+      [disabled]="disabled()"
+      [value]="query()"
+      (focus)="onFocus()"
+      (input)="onInput($any($event.target).value)"
+      (keydown)="onKeydown($event)"
+      role="combobox"
+      aria-autocomplete="list"
+      [attr.aria-expanded]="open()"
+      autocomplete="off"
+    />
+    @if (selectedMed() && !open()) {
+      <svg viewBox="0 0 20 20" fill="currentColor" width="16" class="combobox-check-icon">
+        <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/>
+      </svg>
+    }
+  </div>
+
+  @if (open()) {
+    <div class="combobox-panel">
+      @if (results().length === 0) {
+        <div class="combobox-empty">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="20"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
+          <span>Sin resultados para "{{ query() }}"</span>
+        </div>
+      } @else {
+        <ul class="combobox-list" role="listbox">
+          @for (m of results(); track m.id; let i = $index) {
+            <li
+              [attr.data-idx]="i"
+              class="combobox-option"
+              [class.is-active]="i === activeIndex()"
+              [class.is-selected]="m.id === selectedId()"
+              role="option"
+              [attr.aria-selected]="m.id === selectedId()"
+              (mouseenter)="activeIndex.set(i)"
+              (mousedown)="$event.preventDefault(); select(m)"
+            >
+              <div class="combobox-option-main">
+                <div class="combobox-option-name">
+                  {{ m.nombre }}
+                  @if (m.requiereReceta) {
+                    <span class="badge badge-warning combobox-rx-badge">Rx</span>
+                  }
+                </div>
+                <div class="combobox-option-meta">
+                  {{ m.principioActivo }} @if (m.presentacion) { · {{ m.presentacion }} }
+                </div>
+              </div>
+              <div class="combobox-option-side">
+                <div class="combobox-option-price">S/. {{ m.precioVenta.toFixed(2) }}</div>
+                <div class="combobox-option-stock" [class]="'is-' + stockClass(m)">
+                  {{ m.stock }} en stock
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  }
+</div>
